@@ -18,6 +18,8 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
   test("painel de membros e seleção de igreja exigem login; o link de convite preserva o token", async ({ page }) => {
     await page.goto("/membros");
     await expect(page).toHaveURL(/\/login\?next=%2Fmembros$/);
+    await page.goto("/ministerios/11111111-1111-4111-8111-111111111111");
+    await expect(page).toHaveURL(/\/login\?next=%2Fministerios%2F/);
     await page.goto("/selecionar-igreja?convite=abc123");
     await expect(page).toHaveURL(/\/login\?next=%2Fselecionar-igreja%3Fconvite%3Dabc123$/);
   });

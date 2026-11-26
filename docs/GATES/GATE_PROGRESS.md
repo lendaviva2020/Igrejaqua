@@ -49,3 +49,11 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - Aceite: `/selecionar-igreja?convite=<token>` (agora fora do layout `(app)` para evitar loop de redirecionamento de quem ainda não tem igreja); o login preserva a query string via `safeNextPath`.
 - Limitação: não há envio de e-mail; o admin compartilha o link manualmente.
 - Evidência: tsc, eslint, vitest (98 ok), build, Playwright (18), SQL (convites: autorização, cross-tenant, revogação, expiração).
+
+## Landing, autenticação e integrantes de ministério (Gate 4)
+- Landing (`/`), `/privacidade` e `/termos` públicas, sem números, depoimentos ou capturas fictícias. Redes sociais, e-mail de contato e nome da igreja aparecem no rodapé/landing só quando as variáveis `NEXT_PUBLIC_*` (ver `.env.example`) estiverem definidas.
+- Tipografia: Merriweather (títulos) + Source Sans 3 (texto), auto-hospedadas (@fontsource), sem chamadas ao Google.
+- Auth completa: login, cadastro, esqueci a senha → `/callback` → `/redefinir-senha` (encerra outras sessões), sair, e "Continuar com o Google" (escopos `openid email profile`; só aparece com `NEXT_PUBLIC_AUTH_GOOGLE=true` depois de habilitar o provedor no Supabase e cadastrar `<SITE_URL>/callback` como redirect).
+- `/ministerios/[id]`: adicionar/editar/remover integrantes (função, instrumentos, naipe, ativo) e conceder/revogar permissões (anti-escalada no banco).
+- Textos legais são versão inicial para a igreja piloto; validação jurídica pendente.
+- Evidência: tsc, eslint, build, vitest (116), Playwright (22), SQL (integrantes, convites).

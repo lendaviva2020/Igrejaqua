@@ -368,6 +368,37 @@ select tests.denied('admin rebaixa a si mesmo', format($q$update public.church_m
 reset role;
 select tests.denied('remover último admin (service)', format($q$update public.church_memberships set status='left' where church_id=%L and user_id='00000000-0000-0000-0000-0000000000a1'$q$, :'church_a'));
 
+-- ---------- Integrantes de ministério: quem pode gerenciar ----------
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select tests.denied('líder sem manage_members adiciona integrante', format($q$insert into public.ministry_memberships (church_id,ministry_id,membership_id) select %L,%L,id from public.church_memberships where church_id=%L and user_id='00000000-0000-0000-0000-0000000000a4'$q$, :'church_a', :'min_a', :'church_a'));
+reset role;
+
+select id as mem_b from public.church_memberships where church_id = :'church_b' limit 1 \gset
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+insert into public.ministry_memberships (church_id, ministry_id, membership_id, role, instruments, voice_part)
+  select :'church_a', :'min_a', id, 'member', '{teclado}', 'tenor' from public.church_memberships
+  where church_id = :'church_a' and user_id = '00000000-0000-0000-0000-0000000000a4' returning id as mm_a4 \gset
+select tests.denied('integrante duplicado', format($q$insert into public.ministry_memberships (church_id,ministry_id,membership_id) select %L,%L,id from public.church_memberships where church_id=%L and user_id='00000000-0000-0000-0000-0000000000a4'$q$, :'church_a', :'min_a', :'church_a'));
+select tests.denied('integrante de outra igreja (FK composta)', format($q$insert into public.ministry_memberships (church_id,ministry_id,membership_id) values (%L,%L,%L)$q$, :'church_a', :'min_a', :'mem_b'));
+update public.ministry_memberships set instruments = '{teclado,violão}', role = 'coordinator' where id = :'mm_a4';
+reset role;
+select tests.eq('admin atualizou integrante', (select count(*) from public.ministry_memberships where id = :'mm_a4' and role = 'coordinator' and instruments = '{teclado,violão}'), 1);
+
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+update public.ministry_memberships set role = 'member' where id = :'mm_a4';
+delete from public.ministry_memberships where id = :'mm_a4';
+reset role;
+select tests.eq('líder sem permissão não altera nem remove (RLS filtra)', (select count(*) from public.ministry_memberships where id = :'mm_a4' and role = 'coordinator'), 1);
+
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+delete from public.ministry_memberships where id = :'mm_a4';
+reset role;
+select tests.eq('admin removeu integrante', (select count(*) from public.ministry_memberships where id = :'mm_a4'), 0);
+
 -- ---------- Convites: autorização do painel de membros ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;
