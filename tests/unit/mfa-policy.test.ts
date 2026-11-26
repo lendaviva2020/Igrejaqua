@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { needsMfaChallenge, shouldPromptEnrollment } from "@/lib/auth/mfa-policy";
+import { mfaGate, needsMfaChallenge, needsMfaEnrollment } from "@/lib/auth/mfa-policy";
 import { RemoveFactorSchema, TotpCodeSchema, VerifyChallengeSchema, VerifyEnrollmentSchema } from "@/modules/security/schemas";
 
 describe("política de MFA", () => {
@@ -9,18 +9,20 @@ describe("política de MFA", () => {
   it("admin já em aal2 não é desafiado de novo", () => {
     expect(needsMfaChallenge("admin", "aal2", "aal2")).toBe(false);
   });
-  it("admin sem fator cadastrado não é trancado para fora", () => {
-    expect(needsMfaChallenge("admin", "aal1", "aal1")).toBe(false);
-    expect(needsMfaChallenge("admin", null, null)).toBe(false);
+  it("admin sem fator cadastrado é levado ao cadastro", () => {
+    expect(mfaGate("admin", "aal1", "aal1")).toBe("enroll");
+    expect(mfaGate("admin", null, null)).toBe("enroll");
+  });
+  it("gate: desafio, cadastro ou liberado", () => {
+    expect(mfaGate("admin", "aal1", "aal2")).toBe("challenge");
+    expect(mfaGate("admin", "aal2", "aal2")).toBe("none");
   });
   it("demais papéis nunca são forçados", () => {
-    expect(needsMfaChallenge("leader", "aal1", "aal2")).toBe(false);
-    expect(needsMfaChallenge("member", "aal1", "aal2")).toBe(false);
-  });
-  it("só admin sem fator recebe o convite para cadastrar", () => {
-    expect(shouldPromptEnrollment("admin", "aal1")).toBe(true);
-    expect(shouldPromptEnrollment("admin", "aal2")).toBe(false);
-    expect(shouldPromptEnrollment("member", "aal1")).toBe(false);
+    for (const role of ["leader", "member"] as const) {
+      expect(needsMfaChallenge(role, "aal1", "aal2")).toBe(false);
+      expect(needsMfaEnrollment(role, "aal1")).toBe(false);
+      expect(mfaGate(role, "aal1", "aal1")).toBe("none");
+    }
   });
 });
 

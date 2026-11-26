@@ -43,6 +43,10 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     expect([401, 503]).toContain(errado.status());
     await page.goto("/mfa");
     await expect(page).toHaveURL(/\/login\?next=%2Fmfa$/);
+    await page.goto("/biblia/joao/3");
+    await expect(page).toHaveURL(/\/login\?next=%2Fbiblia%2Fjoao%2F3$/);
+    await page.goto("/mfa/configurar");
+    await expect(page).toHaveURL(/\/login\?next=%2Fmfa%2Fconfigurar$/);
   });
 
   test("landing, privacidade e termos são públicos e sem dados fictícios", async ({ page }) => {

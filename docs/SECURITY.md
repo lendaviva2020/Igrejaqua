@@ -3,7 +3,7 @@
 Status: **PENDING_REVIEW**
 
 ## 1. Autenticação
-- Supabase Auth: e-mail+senha e magic link; OAuth Google opcional (Gate 5). MFA TOTP: admin com fator cadastrado precisa de aal2 (`/mfa`); admin sem fator é convidado a cadastrar (obrigatoriedade total pendente de decisão); opcional para demais.
+- Supabase Auth: e-mail+senha e magic link; OAuth Google opcional (Gate 5). MFA TOTP **obrigatório para `admin`**: sem autenticador, o painel redireciona para `/mfa/configurar`; com autenticador e sessão aal1, para `/mfa`. Opcional para demais papéis. Perda do aparelho: remover o fator pelo painel do Supabase (Authentication → Users).
 - Política de senha mínima 12 caracteres + verificação de senhas vazadas (HIBP, se habilitado no projeto Supabase).
 - Confirmação de e-mail obrigatória. Convites por token de uso único, hash SHA-256 no banco, expiração 7 dias.
 - Callback `/callback` valida `next` contra allowlist de caminhos internos (anti open-redirect).

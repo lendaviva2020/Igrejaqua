@@ -4,7 +4,7 @@ import { can } from "@/lib/permissions/capabilities";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAiState, getChurchData, getMyProfile, listDataRequests } from "@/modules/settings/queries";
 import { getMfaState } from "@/modules/security/queries";
-import { MfaSettings } from "./mfa-settings";
+import { MfaSettings } from "@/components/security/mfa-settings";
 import { NewPasswordForm } from "../../(auth)/redefinir-senha/new-password-form";
 import { AiSettings, ChurchForm, DsrAdminRow, DsrForm, ProfileForm } from "./settings-client";
 import { DSR_KIND_LABEL, DSR_STATUS_LABEL } from "@/modules/settings/schemas";

@@ -4,9 +4,9 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition, type FormEvent } from "react";
 import { confirmTotpEnrollmentAction, removeTotpFactorAction, startTotpEnrollmentAction, type TotpEnrollment } from "@/modules/security/actions";
 
-interface Props { readonly factorId: string | null; readonly promptEnrollment: boolean }
+interface Props { readonly factorId: string | null; readonly promptEnrollment: boolean; readonly redirectTo?: string }
 
-export function MfaSettings({ factorId, promptEnrollment }: Props) {
+export function MfaSettings({ factorId, promptEnrollment, redirectTo }: Props) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [enrollment, setEnrollment] = useState<TotpEnrollment | null>(null);
@@ -26,7 +26,7 @@ export function MfaSettings({ factorId, promptEnrollment }: Props) {
     setError(null);
     start(async () => {
       const r = await confirmTotpEnrollmentAction({ factorId: enrollment.factorId, code });
-      if (r.ok) { setEnrollment(null); router.refresh(); } else setError(r.error.message);
+      if (r.ok) { setEnrollment(null); if (redirectTo !== undefined) router.replace(redirectTo); router.refresh(); } else setError(r.error.message);
     });
   };
   const remove = () => {
@@ -49,7 +49,7 @@ export function MfaSettings({ factorId, promptEnrollment }: Props) {
       ) : enrollment === null ? (
         <>
           <p className="font-medium">Verificação em duas etapas</p>
-          <p className="mt-1 text-sm text-texto-2">{promptEnrollment ? "Como administrador, proteja a conta com um aplicativo autenticador (Google Authenticator, Authy, 1Password…)." : "Proteja a conta com um aplicativo autenticador."}</p>
+          <p className="mt-1 text-sm text-texto-2">{promptEnrollment ? "Como administrador, a verificação em duas etapas é obrigatória. Proteja a conta com um aplicativo autenticador (Google Authenticator, Authy, 1Password…)." : "Proteja a conta com um aplicativo autenticador."}</p>
           <button type="button" onClick={begin} disabled={pending} className="mt-3 min-h-11 rounded-full bg-ambar px-5 font-semibold text-fundo disabled:opacity-60">Configurar</button>
         </>
       ) : (

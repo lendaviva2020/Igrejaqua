@@ -11,6 +11,7 @@ const BASE_NAV: readonly NavItem[] = [
   { href: "/ministerios", label: "Ministérios", icon: "ministerios", bottom: true },
   { href: "/repertorio", label: "Repertório", icon: "repertorio", bottom: true },
   { href: "/oracao", label: "Oração", icon: "oracao", bottom: true },
+  { href: "/biblia", label: "Bíblia", icon: "biblia" },
   { href: "/comunicados", label: "Comunicados", icon: "comunicados" },
   { href: "/contribuir", label: "Contribuir", icon: "contribuir" },
   { href: "/disponibilidade", label: "Disponibilidade", icon: "disponibilidade" },
