@@ -21,8 +21,8 @@
   --color-palco-acorde: #ffc96b;
   --color-palco-mudo: #b3bcd0;
 
-  --font-display: "Instrument Sans Variable", system-ui, sans-serif;
-  --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
+  --font-display: "Merriweather Variable", Georgia, "Times New Roman", serif;
+  --font-sans: "Source Sans 3 Variable", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
   --radius-controle: 0.75rem;
@@ -32,7 +32,7 @@
 @layer base {
   html { background: var(--color-fundo); color: var(--color-texto); color-scheme: dark; }
   body { font-family: var(--font-sans); font-size: 1rem; line-height: 1.55; -webkit-font-smoothing: antialiased; }
-  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 700; letter-spacing: 0; line-height: 1.25; }
   ::selection { background: var(--color-ambar); color: var(--color-sobre-ambar); }
   :focus-visible { outline: 2px solid var(--color-ambar-claro); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }

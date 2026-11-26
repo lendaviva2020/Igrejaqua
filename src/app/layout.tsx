@@ -1,7 +1,9 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
 import { connection } from "next/server";
-import "@fontsource-variable/instrument-sans";
+import "@fontsource-variable/merriweather/wght.css";
+import "@fontsource-variable/merriweather/wght-italic.css";
+import "@fontsource-variable/source-sans-3/wght.css";
 import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "./globals.css";

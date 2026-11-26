@@ -5,7 +5,7 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     const violations: string[] = [];
     page.on("console", (m) => { if (/Content Security Policy/i.test(m.text())) violations.push(m.text()); });
     await page.goto("/");
-    await expect(page.getByRole("heading", { name: "IGREJAQUA" })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("organização do culto");
     expect(violations).toEqual([]);
   });
 
@@ -20,6 +20,26 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await expect(page).toHaveURL(/\/login\?next=%2Fmembros$/);
     await page.goto("/selecionar-igreja?convite=abc123");
     await expect(page).toHaveURL(/\/login\?next=%2Fselecionar-igreja%3Fconvite%3Dabc123$/);
+  });
+
+  test("landing, privacidade e termos são públicos e sem dados fictícios", async ({ page }) => {
+    await page.goto("/");
+    await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
+    await expect(page.getByRole("link", { name: "Criar minha conta" }).first()).toBeVisible();
+    await expect(page.getByRole("navigation", { name: "Redes sociais" })).toHaveCount(0);
+    for (const [path, titulo] of [["/privacidade", "Política de Privacidade"], ["/termos", "Termos de Uso"]] as const) {
+      await page.goto(path);
+      await expect(page).toHaveURL(new RegExp(`${path}$`));
+      await expect(page.getByRole("heading", { level: 1, name: titulo })).toBeVisible();
+    }
+  });
+
+  test("login sem Google configurado não mostra o botão; nova senha exige sessão", async ({ page }) => {
+    await page.goto("/login");
+    await expect(page.getByRole("button", { name: /Google/ })).toHaveCount(0);
+    await expect(page.getByRole("link", { name: "Esqueci a senha" })).toBeVisible();
+    await page.goto("/redefinir-senha");
+    await expect(page).toHaveURL(/\/login\?next=%2Fredefinir-senha$/);
   });
 
   test("cabeçalhos de segurança presentes", async ({ request }) => {

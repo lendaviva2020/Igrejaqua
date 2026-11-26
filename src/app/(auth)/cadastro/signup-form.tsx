@@ -6,10 +6,11 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/shared/form-field";
+import { GoogleButton, OrDivider } from "@/components/auth/google-button";
 import { signUpAction } from "@/modules/identity/actions";
 import { SignUpSchema, type SignUpInput } from "@/modules/identity/schemas";
 
-export function SignUpForm() {
+export function SignUpForm({ googleEnabled }: { googleEnabled: boolean }) {
   const [pending, startTransition] = useTransition();
   const [formError, setFormError] = useState<string | null>(null);
   const [done, setDone] = useState(false);
@@ -39,10 +40,11 @@ export function SignUpForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <h1 className="text-3xl">Criar conta</h1>
+      {googleEnabled ? <><GoogleButton label="Cadastrar com o Google" /><OrDivider /></> : null}
       <FormField label="Nome completo" autoComplete="name" error={errors.fullName?.message} {...register("fullName")} />
       <FormField label="E-mail" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
       <FormField label="Senha" type="password" autoComplete="new-password" hint="Mínimo de 12 caracteres, com letras e números." error={errors.password?.message} {...register("password")} />
-      <p className="text-xs text-texto-2">Ao criar a conta você concorda com o tratamento dos seus dados para a gestão da sua igreja, conforme a LGPD.</p>
+      <p className="text-xs text-texto-2">Ao criar a conta você aceita os <Link className="underline" href="/termos">Termos de Uso</Link> e declara ter lido a <Link className="underline" href="/privacidade">Política de Privacidade</Link>.</p>
       {formError ? <p role="alert" className="text-sm text-perigo">{formError}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Criando…" : "Criar conta"}</Button>
       <Link className="text-sm text-ambar-claro underline" href="/login">Já tenho conta</Link>

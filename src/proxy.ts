@@ -1,7 +1,7 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { updateSession } from "@/lib/supabase/proxy-session";
 
-const PUBLIC_PREFIXES = ["/login", "/cadastro", "/recuperar-senha", "/callback", "/manifest.json", "/icons", "/images", "/api/webhooks/"];
+const PUBLIC_PREFIXES = ["/login", "/cadastro", "/recuperar-senha", "/privacidade", "/termos", "/callback", "/manifest.json", "/icons", "/images", "/api/webhooks/"];
 
 function buildCsp(nonce: string): string {
   const dev = process.env.NODE_ENV !== "production";

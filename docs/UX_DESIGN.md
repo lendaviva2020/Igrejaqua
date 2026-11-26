@@ -23,7 +23,7 @@ Regras: âmbar só para ação primária, "agora/próximo" e ícones de atalho; 
 | `sucesso` | `#3CC9A8` | confirmado | 7,90:1 sobre superfície |
 | `perigo` | `#F27885` | erro, remover | 6,09:1 sobre superfície |
 
-Tipografia: Instrument Sans (variável, auto-hospedada) em pesos 400–700; IBM Plex Mono para cifras. Raios: controles 12px, cartões 18px, botões em pílula. Foco: contorno âmbar-claro de 2px.
+Tipografia: Merriweather (títulos) + Source Sans 3 (texto), auto-hospedadas via @fontsource (sem chamadas ao Google) em pesos 400–700; IBM Plex Mono para cifras. Raios: controles 12px, cartões 18px, botões em pílula. Foco: contorno âmbar-claro de 2px.
 
 ### Navegação
 Mobile: barra inferior com Painel, Agenda, Repertório, Oração e Ministérios; demais telas pelos atalhos do painel. Desktop: barra lateral com todas as seções.
