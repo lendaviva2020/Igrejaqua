@@ -470,6 +470,34 @@ set role authenticated;
 select tests.eq('outra igreja não vê presenças', (select count(*) from public.attendance_records), 0);
 reset role;
 
+-- ---------- Publicação agendada ----------
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+insert into public.announcements_and_devotionals (church_id, kind, title, body_md, status, publish_at, author_membership_id)
+  values (:'church_a','announcement','Vence agora','corpo','scheduled', now() - interval '1 minute', (select id from public.church_memberships where church_id=:'church_a' and user_id='00000000-0000-0000-0000-0000000000a1')) returning id as c_due \gset
+insert into public.announcements_and_devotionals (church_id, kind, title, body_md, status, publish_at, author_membership_id)
+  values (:'church_a','announcement','Vence depois','corpo','scheduled', now() + interval '2 days', (select id from public.church_memberships where church_id=:'church_a' and user_id='00000000-0000-0000-0000-0000000000a1')) returning id as c_later \gset
+select tests.denied('agendado sem data', format($q$insert into public.announcements_and_devotionals (church_id,kind,title,body_md,status) values (%L,'announcement','x','y','scheduled')$q$, :'church_a'));
+reset role;
+
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('membro não vê agendado', (select count(*) from public.announcements_and_devotionals where id in (:'c_due', :'c_later')), 0);
+select tests.denied('executar pelo schema private', $q$select private.publish_due_content(null)$q$);
+select tests.denied('publicar vencidos de outra igreja', format($q$select public.publish_due_content(%L)$q$, :'church_b'));
+select public.publish_due_content(:'church_a') as publicados \gset
+reset role;
+select tests.eq('um conteúdo vencido foi publicado', :publicados, 1);
+select tests.eq('o futuro continua agendado', (select count(*) from public.announcements_and_devotionals where id = :'c_later' and status = 'scheduled'), 1);
+select tests.eq('publicado com data agendada', (select count(*) from public.announcements_and_devotionals where id = :'c_due' and status = 'published' and published_at = publish_at), 1);
+select tests.eq('notificou membros (exceto autor)', (select count(*) from public.notifications where dedupe_key = 'content:' || :'c_due'), (select count(*) from public.church_memberships where church_id = :'church_a' and status = 'active' and user_id <> '00000000-0000-0000-0000-0000000000a1'));
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('membro agora vê o publicado', (select count(*) from public.announcements_and_devotionals where id = :'c_due'), 1);
+reset role;
+select private.publish_due_content(null) as pelo_cron \gset
+select tests.eq('cron sem nada vencido', :pelo_cron, 0);
+
 -- ---------- Convites: autorização do painel de membros ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;

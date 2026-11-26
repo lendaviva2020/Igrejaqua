@@ -67,3 +67,9 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - Na página do evento, cada sessão tem o painel "Presença": "Estou aqui" (check-in próprio, só na janela R-26: 60 min antes do início até o fim, imposta por `private.attendance_guard`, migration `…001200`), e para quem tem `manage_schedule`: lista de presentes, registro manual por liderança e remoção.
 - Membro comum só enxerga a própria presença (RLS). Pessoas com vínculo não ativo não podem ser registradas.
 - Evidência: tsc, eslint, build, vitest, Playwright, SQL (janela, duplicidade, impersonação, permissões, isolamento).
+
+## Publicação agendada (Gate 4)
+- Comunicados/devocionais: "Agendar" (data/hora no fuso da igreja → UTC no cliente, validado no servidor: 1 min a 1 ano à frente). Rascunho agendado pode ser publicado na hora ou voltar a rascunho.
+- Publicação no banco (`private.publish_due_content`, migration `…001300`): `pg_cron` a cada minuto quando a extensão estiver habilitada (Supabase: Database → Extensions → pg_cron) e, como complemento, `public.publish_due_content(church)` ao abrir /comunicados. As notificações saem pelas triggers existentes. Sem service role e sem endpoint HTTP.
+- Pendência de ambiente: habilitar `pg_cron` no projeto real e conferir `select * from cron.job`.
+- Evidência: tsc, eslint, build, vitest (126), Playwright (22), SQL (vencido publica, futuro não, visibilidade, isolamento, notificação).

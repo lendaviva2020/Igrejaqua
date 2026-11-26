@@ -12,8 +12,17 @@ export const CreateContentSchema = z
     /** Ausente = toda a igreja (só administração). Presente = ministério. */
     ministryId: z.string().uuid().optional(),
     publish: z.boolean(),
+    /** Instante UTC (ISO) da publicação agendada; incompatível com `publish: true`. */
+    publishAt: z.string().datetime({ offset: true, message: "Data de publicação inválida" }).optional(),
   })
-  .strict();
+  .strict()
+  .refine((v) => !(v.publish && v.publishAt !== undefined), { path: ["publishAt"], message: "Escolha publicar agora ou agendar" });
 export type CreateContentInput = z.input<typeof CreateContentSchema>;
+
+/** Agendamento válido: ao menos 1 minuto à frente e no máximo 1 ano. */
+export function isValidSchedule(publishAt: Date, now: Date): boolean {
+  const delta = publishAt.getTime() - now.getTime();
+  return delta >= 60_000 && delta <= 366 * 24 * 3_600_000;
+}
 
 export const SetContentStatusSchema = z.object({ id: z.string().uuid(), status: z.enum(["published", "archived", "draft"]) }).strict();
