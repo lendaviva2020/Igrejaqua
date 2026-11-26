@@ -192,6 +192,59 @@ select tests.eq('escalado confirmou', (select count(*) from public.event_lineup 
 with d as (delete from public.event_lineup where id = :'l1' returning 1) select tests.eq('escalado não remove escala (0 linhas)', (select count(*) from d), 0);
 reset role;
 
+-- ---------- Notificações e comunicados ----------
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.eq('escalado recebeu notificação ao publicar', (select count(*) from public.notifications where category = 'escala' and link_path like '/agenda/%'), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('outro membro não vê notificação alheia', (select count(*) from public.notifications), 0);
+select tests.denied('membro cria comunicado', format($q$insert into public.announcements_and_devotionals (church_id,kind,title,body_md,audience,status) values (%L,'announcement','X','y','church','published')$q$, :'church_a'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+insert into public.announcements_and_devotionals (church_id, kind, title, body_md, audience, status, author_membership_id)
+  values (:'church_a','announcement','Rascunho interno','texto','church','draft', private.current_membership_id(:'church_a')) returning id as c_draft \gset
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('membro não vê rascunho de comunicado', (select count(*) from public.announcements_and_devotionals where id = :'c_draft'), 0);
+select tests.eq('rascunho não notifica', (select count(*) from public.notifications where category = 'comunicado'), 0);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+update public.announcements_and_devotionals set status = 'published' where id = :'c_draft';
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('membro vê comunicado publicado', (select count(*) from public.announcements_and_devotionals where id = :'c_draft'), 1);
+select tests.eq('membro foi notificado do comunicado', (select count(*) from public.notifications where category = 'comunicado'), 1);
+update public.notifications set read_at = now() where category = 'comunicado';
+select tests.eq('membro marcou como lida', (select count(*) from public.notifications where category = 'comunicado' and read_at is not null), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+select tests.eq('autor não notifica a si mesmo', (select count(*) from public.notifications where category = 'comunicado'), 0);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+insert into public.notification_preferences (church_id, user_id, category, channel, enabled) values (:'church_a', '00000000-0000-0000-0000-0000000000a4', 'devocional', 'in_app', false);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+insert into public.announcements_and_devotionals (church_id, kind, title, body_md, audience, status, author_membership_id, scripture_ref)
+  values (:'church_a','devotional','Devocional da semana','texto','church','published', private.current_membership_id(:'church_a'), 'Hebreus 10:23');
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('preferência in_app desligada suprime a notificação', (select count(*) from public.notifications where category = 'devocional'), 0);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.eq('outra igreja não vê comunicado nem notificação', (select count(*) from public.announcements_and_devotionals) + (select count(*) from public.notifications), 0);
+reset role;
+
 -- ---------- Eventos: função respeita permissão e fuso da igreja ----------
 select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
 set role authenticated;

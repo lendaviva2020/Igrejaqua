@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarOff, HandHeart, LayoutDashboard, Library, Users, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, CalendarOff, HandHeart, LayoutDashboard, Library, Megaphone, Users, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export interface NavItem { readonly href: string; readonly label: string; readonly bottom?: boolean; readonly icon: "painel" | "agenda" | "ministerios" | "repertorio" | "disponibilidade" | "oracao" }
-const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart };
+export interface NavItem { readonly href: string; readonly label: string; readonly bottom?: boolean; readonly badge?: number; readonly icon: "comunicados" | "notificacoes" | "painel" | "agenda" | "ministerios" | "repertorio" | "disponibilidade" | "oracao" }
+const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart, comunicados: Megaphone, notificacoes: Bell };
 
 export function NavLinks({ items, orientation }: { items: readonly NavItem[]; orientation: "side" | "bottom" }) {
   const pathname = usePathname();
@@ -28,6 +28,7 @@ export function NavLinks({ items, orientation }: { items: readonly NavItem[]; or
             >
               <Icon aria-hidden="true" size={orientation === "bottom" ? 22 : 18} strokeWidth={1.75} />
               <span>{item.label}</span>
+              {item.badge !== undefined && item.badge > 0 ? <span className="tabular ml-auto rounded-full bg-ambar px-2 text-xs font-bold text-sobre-ambar" aria-label={`${item.badge} não lidas`}>{item.badge > 99 ? "99+" : item.badge}</span> : null}
             </Link>
           </li>
         );
