@@ -210,6 +210,31 @@ set role authenticated;
 select tests.denied('outra igreja adiciona sessão', format($q$select public.add_event_session(%L,'Invasora','2027-04-04 07:30','2027-04-04 08:30')$q$, :'ev_c'));
 reset role;
 
+-- ---------- Setlist: ordenação atômica e RSVP ----------
+select id as ver_a from public.song_versions where song_id = :'song_a' and is_default \gset
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select public.create_song(:'church_a','Segunda música','Autor','D','[D]Teste') as song_a2 \gset
+select id as ver_a2 from public.song_versions where song_id = :'song_a2' \gset
+select public.add_to_setlist(:'s_c2', :'ver_a') as sl1 \gset
+select public.add_to_setlist(:'s_c2', :'ver_a2', 'E') as sl2 \gset
+select tests.eq('setlist com 2 itens em posições 0 e 1', (select count(*) from public.event_setlist where session_id = :'s_c2' and position in (0,1)), 2);
+select public.reorder_setlist(:'s_c2', array[:'sl2', :'sl1']::uuid[]);
+select tests.eq('reordenação inverte sem violar unicidade', (select count(*) from public.event_setlist where session_id = :'s_c2' and position = 0 and id = :'sl2'), 1);
+select tests.denied('reordenação com ids faltando', format($q$select public.reorder_setlist(%L, array[%L]::uuid[])$q$, :'s_c2', :'sl1'));
+select tests.denied('reordenação com id repetido', format($q$select public.reorder_setlist(%L, array[%L,%L]::uuid[])$q$, :'s_c2', :'sl1', :'sl1'));
+select tests.denied('música duplicada na mesma sessão', format($q$select public.add_to_setlist(%L, %L)$q$, :'s_c2', :'ver_a'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.denied('membro comum não monta setlist', format($q$select public.add_to_setlist(%L, %L)$q$, :'s_c2', :'ver_a2'));
+select tests.eq('membro lê o setlist', (select count(*) from public.event_setlist where session_id = :'s_c2'), 2);
+select tests.denied('membro não reordena', format($q$select public.reorder_setlist(%L, array[%L,%L]::uuid[])$q$, :'s_c2', :'sl1', :'sl2'));
+insert into public.event_rsvps (church_id, session_id, membership_id, status) select :'church_a', :'s_c2', private.current_membership_id(:'church_a'), 'going';
+select tests.eq('RSVP próprio gravado', (select count(*) from public.event_rsvps where session_id = :'s_c2'), 1);
+select tests.denied('RSVP em nome de outro', format($q$insert into public.event_rsvps (church_id, session_id, membership_id, status) values (%L, %L, %L, 'going')$q$, :'church_a', :'s_c2', :'mm_a2'));
+reset role;
+
 -- ---------- Indisponibilidade: motivo privado; líder só vê booleano ----------
 select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
 set role authenticated;
