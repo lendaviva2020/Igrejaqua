@@ -1,0 +1,7 @@
+db-uri = "postgres://pgtest@/iq_e2e?host=/tmp&port=54329"
+db-schemas = "public"
+db-anon-role = "anon"
+jwt-secret = "iq-e2e-local-secret-nao-usar-em-producao-0123456789"
+server-host = "127.0.0.1"
+server-port = 54401
+db-pool = 5

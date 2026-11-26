@@ -10,3 +10,6 @@ coverage
 playwright-report
 test-results
 .vercel
+
+# capturas e sessões do ambiente de teste isolado
+.stack/

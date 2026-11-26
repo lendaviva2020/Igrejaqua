@@ -26,7 +26,7 @@ export function AppShell({ churchName, role, items, unread, children }: { church
           </button>
         </SignOutForm>
       </aside>
-      <div className="pb-24 md:pb-0">
+      <div className="min-w-0 pb-24 md:pb-0">
         <header className="flex items-center justify-between gap-3 px-4 py-3 md:hidden">
           <div className="flex min-w-0 items-center gap-2">
             <Logo size={28} className="shrink-0 text-ambar" />

@@ -206,3 +206,8 @@ select tests.eq('pix aprovado notifica o administrador', (select count(*) from p
 select tests.eq('aviso não identifica o contribuinte', (select count(*) from public.notifications where dedupe_key = 'pix:' || :'pix_w' and (body ilike '%e3%' or title ilike '%e3%')), 0);
 update public.pix_charges set updated_at = now() where id = :'pix_w';
 select tests.eq('reprocessar não duplica o aviso', (select count(*) from public.notifications where dedupe_key = 'pix:' || :'pix_w' and user_id = '00000000-0000-0000-0000-0000000000e1'), 1);
+
+-- ===== Grant explícito do limitador de tentativas =====
+select tests.eq('service_role executa rate_limit_hit explicitamente', (has_function_privilege('service_role', 'public.rate_limit_hit(text,integer,integer)', 'execute'))::int, 1);
+select tests.eq('authenticated NÃO executa rate_limit_hit', (has_function_privilege('authenticated', 'public.rate_limit_hit(text,integer,integer)', 'execute'))::int, 0);
+select tests.eq('anon NÃO executa rate_limit_hit', (has_function_privilege('anon', 'public.rate_limit_hit(text,integer,integer)', 'execute'))::int, 0);

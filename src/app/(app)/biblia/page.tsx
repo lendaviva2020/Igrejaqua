@@ -25,9 +25,9 @@ export default async function BibleIndexPage({ searchParams }: { searchParams: P
     <>
       <PageHeader title="Bíblia" description="Leia por livro e capítulo ou vá direto a uma referência." />
       <form method="get" className="mb-8 flex max-w-xl flex-col gap-3 sm:flex-row sm:items-end">
-        <label className="flex flex-1 flex-col gap-1 text-sm font-medium" htmlFor="q">
+        <label className="flex min-w-0 flex-1 flex-col gap-1 text-sm font-medium" htmlFor="q">
           Ir para (ex.: João 3:16, Sl 23, 1 Coríntios 13)
-          <input id="q" name="q" defaultValue={q ?? ""} autoComplete="off" className="min-h-12 rounded-xl border border-linha bg-fundo px-4 text-base" aria-describedby={notFound ? "q-erro" : undefined} />
+          <input id="q" name="q" defaultValue={q ?? ""} autoComplete="off" className="min-h-12 w-full min-w-0 rounded-xl border border-linha bg-fundo px-4 text-base" aria-describedby={notFound ? "q-erro" : undefined} />
         </label>
         <label className="flex flex-col gap-1 text-sm font-medium" htmlFor="t">
           Tradução

@@ -124,3 +124,10 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 - Retenção de contato de visitantes (migration `20261126001900`, 365 dias por padrão) com teste em `110_wave2.sql`; 19 migrations.
 - Aviso à administração quando um Pix é confirmado (migration `20261126002000`, categoria `contribuicao`; não identifica o contribuinte; dedupe por cobrança). 20 migrations.
 - Estorno total de Pix pela administração (`refundChargeAction` → `POST /v1/payments/{id}/refunds` com idempotência; status local só muda após reconsulta do provedor). Testado só com `fetch` simulado (`tests/unit/pix-payments.test.ts`).
+
+## Passeio autenticado em ambiente isolado — 2026-11-26
+- Pilha local (`tools/e2e-stack/`, ver `docs/E2E_STACK.md`): Postgres com as 21 migrations, PostgREST real, login de teste com MFA TOTP e dados de teste.
+- `npm run test:stack`: 3 logins (administrador com MFA obrigatório, líder, membro) + 43 telas × 3 tamanhos (celular 390, tablet 820, desktop 1440) = **132 verificações passaram** (sem erro de página, sem 5xx, sem rolagem horizontal, barreiras de acesso 404).
+- Defeitos reais encontrados e corrigidos: (1) rolagem horizontal de 13 px na Bíblia em tablet — coluna do shell sem `min-w-0` + campo de busca sem encolher; (2) limitador de tentativas dependia de privilégio padrão implícito da plataforma — migration `20261126002100` torna o grant explícito à `service_role`.
+- Suíte SQL também passa sob os privilégios padrão do Supabase (`IQ_SUPABASE_DEFAULT_PRIVS=1`).
+- Limite: o login de teste substitui o GoTrue; Auth real, e-mails, getBible, push, Pix e IA seguem não exercitados.

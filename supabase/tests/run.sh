@@ -6,6 +6,7 @@ DB=iq_test
 HERE="$(cd "$(dirname "$0")" && pwd)"
 psql -v ON_ERROR_STOP=1 -q -d postgres -c "drop database if exists $DB" -c "create database $DB"
 psql -v ON_ERROR_STOP=1 -q -d $DB -f "$HERE/00_supabase_shim.sql"
+if [ "${IQ_SUPABASE_DEFAULT_PRIVS:-0}" = "1" ]; then echo "== privilégios padrão do Supabase ativados"; psql -v ON_ERROR_STOP=1 -q -d $DB -f "$HERE/01_supabase_default_privileges.sql"; fi
 for f in "$HERE"/../migrations/*.sql; do echo "== migration $(basename "$f")"; psql -v ON_ERROR_STOP=1 -q -d $DB -f "$f"; done
-for f in "$HERE"/[1-9]*.sql; do echo "== teste $(basename "$f")"; psql -v ON_ERROR_STOP=1 -q -d $DB -f "$f"; done
+for f in "$HERE"/[1-9][0-9]*.sql; do echo "== teste $(basename "$f")"; psql -v ON_ERROR_STOP=1 -q -d $DB -f "$f"; done
 echo "TODOS OS TESTES SQL PASSARAM"
