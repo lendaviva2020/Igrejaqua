@@ -16,6 +16,19 @@
   --color-sucesso: #3cc9a8;
   --color-perigo: #f27885;
 
+  /* Landing (tema claro, decisão do responsável): papel, tinta e ouro. */
+  --color-papel: #fbfaf7;
+  --color-papel-2: #f4f0e6;
+  --color-papel-3: #f0ebdd;
+  --color-filete: #eae7e0;
+  --color-tinta: #172b4d;
+  --color-tinta-2: #243d66;
+  --color-tinta-3: #526071;
+  --color-tinta-4: #5f6875;
+  --color-ouro: #b18b43;
+  --color-ouro-texto: #7d5f2a;
+  --color-ouro-claro: #e2c47d;
+
   --color-palco: #0a0d14;
   --color-palco-txt: #f6f1e6;
   --color-palco-acorde: #ffc96b;

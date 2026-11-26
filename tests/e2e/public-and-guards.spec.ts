@@ -5,7 +5,7 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     const violations: string[] = [];
     page.on("console", (m) => { if (/Content Security Policy/i.test(m.text())) violations.push(m.text()); });
     await page.goto("/");
-    await expect(page.getByRole("heading", { level: 1 })).toContainText("organização do culto");
+    await expect(page.getByRole("heading", { level: 1 })).toContainText("pessoas unidas");
     expect(violations).toEqual([]);
   });
 
@@ -31,7 +31,7 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
   test("landing, privacidade e termos são públicos e sem dados fictícios", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
-    await expect(page.getByRole("link", { name: "Criar minha conta" }).first()).toBeVisible();
+    await expect(page.getByRole("link", { name: "Criar conta da igreja" }).first()).toBeVisible();
     await expect(page.getByRole("navigation", { name: "Redes sociais" })).toHaveCount(0);
     for (const [path, titulo] of [["/privacidade", "Política de Privacidade"], ["/termos", "Termos de Uso"]] as const) {
       await page.goto(path);

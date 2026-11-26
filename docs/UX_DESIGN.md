@@ -84,3 +84,6 @@ Barra inferior (mobile): Agenda · Disponibilidade · Palco · Comunidade · Mai
 
 ## Classificação
 Direção visual: PENDING_REVIEW · Implementação: NOT_IMPLEMENTED
+
+## Landing (decisão do responsável)
+A landing pública (`/`) usa tema claro "papel, tinta e ouro" (tokens `papel`, `tinta`, `ouro*` em `globals.css`), com Merriweather nos títulos. O app autenticado, login e páginas legais continuam em "Noite & Âmbar". As ilustrações da interface na landing não exibem nomes, números, datas nem letras de música (sem dados fictícios; letras são protegidas por direitos autorais).
