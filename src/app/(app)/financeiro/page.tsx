@@ -41,6 +41,7 @@ export default async function FinancePage({ searchParams }: { searchParams: Prom
         <p className="text-lg font-semibold capitalize">{monthFmt.format(new Date(Date.UTC(year, month - 1, 1)))}</p>
         <Link href={`/financeiro?m=${shiftMonth(year, month, 1)}`} className="inline-flex min-h-11 items-center rounded-full border border-linha px-4 text-sm font-semibold hover:bg-superficie-2">Próximo mês</Link>
       </nav>
+      <p className="mb-4 text-right"><a href={`/financeiro/exportar?m=${selected}`} className="inline-flex min-h-11 items-center rounded-full border border-linha px-4 text-sm font-semibold hover:bg-superficie-2">Exportar CSV do mês</a></p>
       <dl className="mb-8 grid grid-cols-1 gap-3 sm:grid-cols-3">
         {[["Entradas", totalIn], ["Saídas", totalOut], ["Saldo do mês", totalIn - totalOut]].map(([label, value]) => (
           <div key={String(label)} className="rounded-superficie border border-linha bg-superficie p-4"><dt className="text-sm text-texto-2">{label}</dt><dd className="tabular mt-1 text-2xl font-semibold">{formatCents(Number(value))}</dd></div>

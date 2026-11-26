@@ -4,7 +4,7 @@ Data: 2026-11-25. Ambiente: Node 22, Postgres 16 local (sem Supabase hospedado),
 Regra do projeto: **só é "feito" o que tem evidência abaixo.**
 
 ## Decisões assumidas por "Executar tudo" (requerem confirmação)
-1. Escopo em duas ondas; **Onda 2 (ledger financeiro, famílias, visitantes, células) não implementada**.
+1. Escopo em duas ondas; **Onda 2 (livro-caixa, famílias, visitantes, células) implementada em 2026-11-26** (ver seção própria).
 2. Contexto de igreja por cookie revalidado (ADR-0003).
 3. IA **desligada por padrão**; nenhuma chamada à DeepSeek foi implementada nem executada. Ativar exige parecer jurídico (transferência internacional + dado religioso).
 
@@ -27,7 +27,7 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 | 1 Design System | IMPLEMENTADO | tokens "Noite & Âmbar", componentes base, Stage Mode, axe automatizado (E2E) | aprovação do designer humano |
 | 2 Banco/Auth/RLS | IMPLEMENTADO localmente | 17 migrations, RLS em todas as tabelas, FKs compostas, triggers, auditoria append-only, suíte SQL | aplicar em Supabase real; fluxo de Auth real; tipos gerados |
 | 3 Navegação | IMPLEMENTADO | proxy (sessão, CSP nonce), shell por papel, seleção de igreja, convites | — |
-| 4 Módulos | IMPLEMENTADO | ministérios, repertório, agenda/escalas, membros/convites, presença, comunicados, oração, notificações, configurações/LGPD, publicação agendada, contribuições Pix | Onda 2 (ledger financeiro, famílias, visitantes, células) |
+| 4 Módulos | IMPLEMENTADO | ministérios, repertório, agenda/escalas, membros/convites, presença, comunicados, oração, notificações, configurações/LGPD, publicação agendada, contribuições Pix | revisão LGPD do livro-caixa; retenção de visitantes |
 | 5 Integrações | IMPLEMENTADO (código e testes locais) | motor de IA consultiva (escala), PWA/offline, retenção de dados (`private.run_retention`), fila de e-mail (Resend) e Web Push (VAPID) com worker `/api/cron/deliver`, MFA TOTP para admin | chamadas reais (DeepSeek, Resend, push); parecer jurídico (LGPD art. 33) antes de ligar a IA; demais capacidades de IA (repertório, tom vocal, ensaio, transições); agendar o worker e `pg_cron` |
 | 6 Testes/Segurança | PARCIAL | testes acima, varredura de segredos no bundle, headers, axe | pentest, carga, restauração de backup |
 | 7 Homologação | NÃO INICIADO | — | tudo |
@@ -119,3 +119,5 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 - Capacidades novas em `capabilities.ts`: `family.view`, `family.manage`, `visitor.manage`, `visitor.delete`, `cell.manage`, `finance.manage`; testes em `tests/unit/wave2-schemas.test.ts` e `finance-money.test.ts`.
 - Bíblia integrada a comunicados/devocionais (`ScriptureLink`) e "Leitura do dia" no painel (referência do último devocional publicado; nenhum versículo inventado).
 - Pendências: revisão LGPD do livro-caixa; retenção de visitantes; nada foi exercitado contra serviços reais (Supabase/Resend/push/getBible) no sandbox.
+
+- Exportação CSV mensal do livro-caixa (`/financeiro/exportar?m=AAAA-MM`, só administração, anti-injeção de fórmula; `tests/unit/finance-csv.test.ts`).
