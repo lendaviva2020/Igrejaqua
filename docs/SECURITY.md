@@ -24,7 +24,7 @@ Teste obrigatório (Gate 2/6): usuário da igreja A tenta SELECT/INSERT/UPDATE/D
 Ver `RBAC.md`. Resumo: papel de igreja (`admin|leader|member`) em `church_memberships` + permissões granulares por ministério em `ministry_permissions`. Autoridade real de `leader` vem das permissões do ministério, não do papel.
 
 ## 5. Estratégia de RLS
-- RLS **habilitada e forçada** (`ENABLE` + `FORCE ROW LEVEL SECURITY`) em todas as tabelas de `public`.
+- RLS **habilitada** (`ENABLE ROW LEVEL SECURITY`) em todas as tabelas de `public`. **Decisão tomada na implementação:** não usamos `FORCE`, porque as funções `SECURITY DEFINER` de `private` leem `church_memberships` como dono da tabela e `FORCE` as sujeitaria à própria RLS (recursão). `anon`/`authenticated` nunca são donos, logo a RLS vale para eles; privilégios de tabela (`GRANT`) são mínimos por papel como defesa em profundidade. Teste SQL garante RLS ativa em 100% das tabelas.
 - Política por operação (SELECT/INSERT/UPDATE/DELETE), nunca `FOR ALL` genérica.
 - `anon` sem acesso a tabelas de negócio (REVOKE). Único acesso anônimo: páginas de marketing e leitura de `contributions` marcadas como públicas **apenas se** a igreja habilitar (PENDING_REVIEW).
 - `WITH CHECK` sempre presente em INSERT/UPDATE e repete a checagem de tenant.

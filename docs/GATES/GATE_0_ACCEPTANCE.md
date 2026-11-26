@@ -1,6 +1,6 @@
 # GATE 0 — Relatório de Aceite
 
-**Veredito: GATE 0 NÃO APROVADO. Pronto para revisão humana.** A existência dos documentos não equivale a aprovação. Este gate só é aprovado quando um humano resolver os itens `PENDING_REVIEW`/`BLOCKED` abaixo.
+**Veredito original: GATE 0 NÃO APROVADO. Pronto para revisão humana.** Atualização: o responsável pediu "Executar tudo"; isso foi tratado como autorização para prosseguir, mas as decisões RISK-01/03/04 seguem com as recomendações assumidas (ver `GATE_PROGRESS.md`) e **precisam de confirmação humana/jurídica antes de produção**. A existência dos documentos não equivale a aprovação. Este gate só é aprovado quando um humano resolver os itens `PENDING_REVIEW`/`BLOCKED` abaixo.
 
 Classificações: `APPROVED` · `PENDING_REVIEW` · `BLOCKED` · `NOT_IMPLEMENTED`
 
@@ -39,7 +39,7 @@ Classificações: `APPROVED` · `PENDING_REVIEW` · `BLOCKED` · `NOT_IMPLEMENTE
 | ID | Risco | Sev. | Mitigação | Status |
 |---|---|---|---|---|
 | RISK-01 | Dois prompts com escopos distintos (louvor/IA vs. gestão geral/financeiro) | Alta | União em 2 ondas (ARCHITECTURE §1); decisão humana | PENDING_REVIEW |
-| RISK-02 | Versões muito novas e não testadas em conjunto (TS 7, Next 16, Vitest 5, Tailwind 4, Zod 4, lucide 1.x) | Alta | Spike de compatibilidade no Gate 1; fallback TS 5.x | PENDING_REVIEW |
+| RISK-02 | Versões muito novas e não testadas em conjunto | Alta | Spike executado no Gate 1: tudo compatível, exceto TS 7 × typescript-eslint → fixado TS 6.0.3 | APPROVED (mitigado, ver ARCHITECTURE §7) |
 | RISK-03 | Dado de religião é **sensível** na LGPD | Alta | Consentimento específico, minimização, DPO, ROPA | PENDING_REVIEW |
 | RISK-04 | Transferência internacional de dados para DeepSeek | Alta | Pseudonimização + consentimento + parecer jurídico; IA desligada por padrão | BLOCKED (para ativar IA em produção) |
 | RISK-05 | Falha de política RLS vazar dados entre igrejas | Crítica | 3 camadas, FKs compostas, matriz cross-tenant automática | PENDING_REVIEW |

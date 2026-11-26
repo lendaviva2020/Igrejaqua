@@ -122,6 +122,26 @@ select tests.denied('líder concede a si mesmo', format($q$insert into public.mi
 select tests.denied('líder concede o que não tem', format($q$insert into public.ministry_permissions (church_id,ministry_id,ministry_membership_id,permission) values (%L,%L,%L,'manage_rehearsals')$q$, :'church_a', :'min_a', :'mm_a2'));
 reset role;
 
+-- ---------- Música: criação atômica respeita permissões ----------
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.denied('membro cria música via função', format($q$select public.create_song(%L,'Teste',null,'G','[G]a'::text)$q$, :'church_a'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select public.create_song(:'church_a','Grande é o Senhor','Autor','G','[G]Grande é o [D]Senhor') as song_a \gset
+select tests.eq('música + versão padrão criadas', (select count(*) from public.song_versions where song_id = :'song_a' and is_default and status='published'), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.eq('outra igreja não vê a música', (select count(*) from public.songs), 0);
+select tests.denied('outra igreja cria música em A', format($q$select public.create_song(%L,'Invasora',null,'G','x'::text)$q$, :'church_a'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('membro comum lê a música publicada', (select count(*) from public.songs where id = :'song_a'), 1);
+reset role;
+
 -- ---------- Escala: evento, sessões, regras ----------
 select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
 set role authenticated;

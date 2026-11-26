@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import type { ReactNode } from "react";
+import { connection } from "next/server";
 import "@fontsource-variable/newsreader";
 import "@fontsource-variable/instrument-sans";
 import "@fontsource/ibm-plex-mono/400.css";
@@ -19,7 +20,12 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
-export default function RootLayout({ children }: { children: ReactNode }) {
+/**
+ * Renderização dinâmica obrigatória: a CSP usa nonce por requisição (src/proxy.ts), e páginas
+ * pré-renderizadas não recebem nonce — seus scripts seriam bloqueados pelo navegador.
+ */
+export default async function RootLayout({ children }: { children: ReactNode }) {
+  await connection();
   return (
     <html lang="pt-BR">
       <body>{children}</body>

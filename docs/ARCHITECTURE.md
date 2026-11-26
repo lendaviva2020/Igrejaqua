@@ -122,7 +122,7 @@ Manifest + service worker (Serwist, a confirmar compatibilidade com a versão fi
 |---|---|---|
 | next | 16.4.6 | atende "Next.js 15+"; **confirmar** suporte oficial de `@supabase/ssr` e Serwist |
 | react | 19.3.1 | |
-| typescript | 7.0.2 | **PENDING_REVIEW:** major recente; validar com Next/Vitest/ESLint no Gate 1; fallback 5.x |
+| typescript | **6.0.3** (fixado) | TS 7.0.2 compila e builda com Next 16, mas `typescript-eslint` ainda não o suporta (erro verificado). Usar 6.x até haver suporte; reavaliar a cada release |
 | tailwindcss | 4.3.5 | CSS-first config |
 | @supabase/supabase-js / ssr | 2.119.2 / 0.12.7 | |
 | zod | 4.6.7 | |
@@ -131,7 +131,7 @@ Manifest + service worker (Serwist, a confirmar compatibilidade com a versão fi
 | @playwright/test | 1.65.1 | |
 | lucide-react | 1.80.0 | |
 
-**Estas versões foram lidas do registro, não testadas em conjunto.** O Gate 1 inclui um spike de instalação + `tsc` + `build` vazio como critério de aceite antes de fixar `package.json`.
+**Verificado no Gate 1:** Next 16.4.6 + React 19.3.1 + Tailwind 4.3.5 + Zod 4.6.7 + Vitest 5.1.2 + Playwright 1.65.1 + supabase-js/ssr instalam, compilam (`tsc`, `eslint`, `next build`) e passam nos testes. Exceção: TypeScript 7 (ver tabela).
 
 ## 8. Classificação
 
@@ -142,3 +142,13 @@ Manifest + service worker (Serwist, a confirmar compatibilidade com a versão fi
 | Escopo Onda 1 / Onda 2 | PENDING_REVIEW |
 | Matriz de versões | PENDING_REVIEW |
 | Implementação de qualquer código de aplicação | NOT_IMPLEMENTED (por design no Gate 0) |
+
+
+## 9. Desvios da árvore original (decididos na implementação)
+| Desvio | Motivo |
+|---|---|
+| `src/proxy.ts` em vez de `middleware.ts` | Next 16 renomeou o arquivo (build reporta "Proxy (Middleware)") |
+| Stage Mode em `src/app/(stage)/palco/[versionId]` (grupo próprio) | Precisa de layout sem navegação e tema escuro; `/palco` por **versão de música** enquanto o módulo de sessões/setlist não existe |
+| Root layout `await connection()` | A CSP usa nonce por requisição; páginas estáticas não recebem nonce e perderiam JavaScript (bug real detectado e corrigido, coberto por E2E) |
+| Fontes via `@fontsource*` (auto-hospedadas) | Build determinístico, sem depender de rede em tempo de build |
+| `rate_limit_hit` via service role | Tabela de buckets fica fora do alcance de `authenticated` |
