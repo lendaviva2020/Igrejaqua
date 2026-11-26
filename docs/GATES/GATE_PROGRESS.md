@@ -30,7 +30,7 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 | 4 Módulos | IMPLEMENTADO | ministérios, repertório, agenda/escalas, membros/convites, presença, comunicados, oração, notificações, configurações/LGPD, publicação agendada, contribuições Pix | revisão LGPD do livro-caixa |
 | 5 Integrações | IMPLEMENTADO (código e testes locais) | motor de IA consultiva (escala), PWA/offline, retenção de dados (`private.run_retention`), fila de e-mail (Resend) e Web Push (VAPID) com worker `/api/cron/deliver`, MFA TOTP para admin | chamadas reais (DeepSeek, Resend, push); parecer jurídico (LGPD art. 33) antes de ligar a IA; demais capacidades de IA (repertório, tom vocal, ensaio, transições); agendar o worker e `pg_cron` |
 | 6 Testes/Segurança | PARCIAL | testes acima, varredura de segredos no bundle, headers, axe | pentest, carga, restauração de backup |
-| 7 Homologação | NÃO INICIADO | — | tudo |
+| 7 Homologação | ROTEIRO PRONTO | `docs/HOMOLOGATION.md` (pré-requisitos, aceite funcional, backup/restauração, rollback, operação, incidente) | executar o roteiro em ambiente real; teste de restauração; pareceres jurídicos |
 
 ## Bugs reais encontrados e corrigidos durante a execução
 1. CSP com nonce deixava páginas estáticas sem JavaScript → `await connection()` no layout raiz + E2E de hidratação.
@@ -44,7 +44,7 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 ## Atualização — Pix via Mercado Pago (Gate 4/5)
 - Implementado: `pix_charges` (RLS: pagador + admin; cliente só cria intenção), cliente Mercado Pago (`POST /v1/payments`, `X-Idempotency-Key`, expiração -03:00), webhook `/api/webhooks/mercadopago` (HMAC-SHA256 do manifesto `id;request-id;ts`, comparação em tempo constante; status relido na API do provedor; confere `external_reference` e valor), páginas `/contribuir` e `/contribuir/[chargeId]` (QR em SVG, copia e cola, verificação automática).
 - **Não verificado contra o provedor real**: sem chaves, só testado com `fetch` simulado e testes SQL. Pendente: configurar `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET`, cadastrar a URL do webhook no painel e testar em sandbox antes de produção.
-- Pendente: revisão LGPD do dado financeiro por pessoa; estorno pelo app (depende do provedor real).
+- Pendente: revisão LGPD do dado financeiro por pessoa; validar o estorno no sandbox do Mercado Pago.
 
 ## Membros e convites (Gate 4)
 - `/membros` (somente admin): gerar convite (token de 256 bits; só o hash sha256 é gravado; link exibido uma única vez, válido 7 dias), revogar, alterar papel e suspender/reativar. Regras de proteção (não alterar o próprio papel, último admin) permanecem no banco (`memberships_guard`).
@@ -123,3 +123,4 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 - Exportação CSV mensal do livro-caixa (`/financeiro/exportar?m=AAAA-MM`, só administração, anti-injeção de fórmula; `tests/unit/finance-csv.test.ts`).
 - Retenção de contato de visitantes (migration `20261126001900`, 365 dias por padrão) com teste em `110_wave2.sql`; 19 migrations.
 - Aviso à administração quando um Pix é confirmado (migration `20261126002000`, categoria `contribuicao`; não identifica o contribuinte; dedupe por cobrança). 20 migrations.
+- Estorno total de Pix pela administração (`refundChargeAction` → `POST /v1/payments/{id}/refunds` com idempotência; status local só muda após reconsulta do provedor). Testado só com `fetch` simulado (`tests/unit/pix-payments.test.ts`).

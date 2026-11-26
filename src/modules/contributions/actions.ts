@@ -4,7 +4,8 @@ import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser, resolveChurchContext } from "@/lib/auth/context";
 import { publicEnv } from "@/lib/env";
-import { createPixPayment, mercadoPagoConfig, MercadoPagoError } from "@/lib/payments/mercadopago";
+import { can } from "@/lib/permissions/capabilities";
+import { createPixPayment, mercadoPagoConfig, MercadoPagoError, refundPayment } from "@/lib/payments/mercadopago";
 import { fail, fromPostgrestError, ok, zodFieldErrors, type Result } from "@/lib/result";
 import { allow } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -75,4 +76,35 @@ export async function refreshChargeAction(input: unknown): Promise<Result<{ refr
   revalidatePath(`/contribuir/${parsed.data.chargeId}`);
   revalidatePath("/contribuir");
   return ok({ refreshed: true });
+}
+
+/**
+ * Estorno total de uma contribuição confirmada. Somente a administração. O status local só passa a "estornado"
+ * quando o provedor confirma (reconsulta + conferência de valor/referência); falha de rede nunca marca estorno.
+ */
+export async function refundChargeAction(input: unknown): Promise<Result<{ refunded: true }>> {
+  const parsed = ChargeIdSchema.safeParse(input);
+  if (!parsed.success) return fail("VALIDATION", "Cobrança inválida.");
+  const cfg = mercadoPagoConfig();
+  if (cfg === null) return fail("UNAVAILABLE", "Contribuições online não estão configuradas.");
+  const ctx = await resolveChurchContext();
+  if (!can(ctx, "finance.manage")) return fail("FORBIDDEN", "Apenas a administração estorna contribuições.");
+  if (!(await allow(`pix-refund:${ctx.userId}`, 10, 3600))) return fail("RATE_LIMITED", "Muitas tentativas. Tente novamente mais tarde.");
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("pix_charges").select("provider_payment_id, status").eq("church_id", ctx.churchId).eq("id", parsed.data.chargeId).maybeSingle();
+  if (error) return fromPostgrestError(error);
+  if (data === null) return fail("NOT_FOUND", "Cobrança não encontrada.");
+  const row = data as { provider_payment_id: string | null; status: string };
+  if (row.status !== "approved" || row.provider_payment_id === null) return fail("CONFLICT", "Só é possível estornar contribuições confirmadas.");
+  try {
+    await refundPayment(cfg, row.provider_payment_id, `refund-${parsed.data.chargeId}`);
+  } catch (cause) {
+    console.error("pix_refund_failed", cause instanceof MercadoPagoError ? cause.message : "erro interno");
+    return fail("UNAVAILABLE", "O provedor não concluiu o estorno. Nada foi alterado; tente novamente.");
+  }
+  // O webhook também atualiza; aqui reconsultamos para refletir já. Falha nesta etapa não desfaz o estorno.
+  await syncChargeFromProvider(cfg, row.provider_payment_id).catch(() => undefined);
+  revalidatePath(`/contribuir/${parsed.data.chargeId}`);
+  revalidatePath("/contribuir");
+  return ok({ refunded: true });
 }

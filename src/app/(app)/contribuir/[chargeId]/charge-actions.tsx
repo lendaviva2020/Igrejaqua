@@ -3,9 +3,9 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { refreshChargeAction } from "@/modules/contributions/actions";
+import { refreshChargeAction, refundChargeAction } from "@/modules/contributions/actions";
 
-export function ChargeActions({ chargeId, qrCode, pending: isPending }: { chargeId: string; qrCode: string | null; pending: boolean }) {
+export function ChargeActions({ chargeId, qrCode, pending: isPending, canRefund }: { chargeId: string; qrCode: string | null; pending: boolean; canRefund: boolean }) {
   const router = useRouter();
   const [busy, start] = useTransition();
   const [copied, setCopied] = useState(false);
@@ -14,6 +14,14 @@ export function ChargeActions({ chargeId, qrCode, pending: isPending }: { charge
   const refresh = () => start(async () => {
     const r = await refreshChargeAction({ chargeId });
     setMessage(r.ok ? null : r.error.message);
+    router.refresh();
+  });
+
+  const [confirming, setConfirming] = useState(false);
+  const refund = () => start(async () => {
+    const r = await refundChargeAction({ chargeId });
+    setMessage(r.ok ? null : r.error.message);
+    setConfirming(false);
     router.refresh();
   });
 
@@ -33,6 +41,17 @@ export function ChargeActions({ chargeId, qrCode, pending: isPending }: { charge
         </Button>
       ) : null}
       {isPending ? <Button type="button" variant="secondary" disabled={busy} onClick={refresh}>{busy ? "Verificando…" : "Já paguei — verificar"}</Button> : null}
+      {canRefund ? (
+        confirming ? (
+          <div className="flex flex-col gap-2 rounded-superficie border border-perigo/60 p-4">
+            <p className="text-sm">Estornar o valor integral ao contribuinte? Esta ação não pode ser desfeita.</p>
+            <div className="flex gap-2">
+              <Button type="button" variant="danger" disabled={busy} onClick={refund}>{busy ? "Estornando…" : "Confirmar estorno"}</Button>
+              <Button type="button" variant="quiet" disabled={busy} onClick={() => setConfirming(false)}>Cancelar</Button>
+            </div>
+          </div>
+        ) : <Button type="button" variant="quiet" onClick={() => setConfirming(true)}>Estornar contribuição</Button>
+      ) : null}
       <p role="status" aria-live="polite" className="text-sm text-perigo">{message}</p>
     </div>
   );

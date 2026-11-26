@@ -5,6 +5,7 @@ import { z } from "zod";
 import { PageHeader } from "@/components/shared/page-header";
 import { QrCode } from "@/components/shared/qr-code";
 import { resolveChurchContext } from "@/lib/auth/context";
+import { can } from "@/lib/permissions/capabilities";
 import { CHARGE_STATUS_LABEL } from "@/lib/payments/charge-status";
 import { formatCents } from "@/lib/payments/money";
 import { getCharge } from "@/modules/contributions/queries";
@@ -31,8 +32,9 @@ export default async function ChargePage({ params }: { params: Promise<{ chargeI
             <p className="text-sm text-texto-2">Abra o app do seu banco, escolha Pix e leia o QR Code ou use o código copia e cola. O pagamento é confirmado automaticamente.</p>
           </>
         ) : null}
+        {charge.status === "refunded" ? <p className="text-texto-2">Esta contribuição foi estornada.</p> : null}
         {charge.status === "expired" || charge.status === "cancelled" || charge.status === "rejected" ? <p className="text-texto-2">Esta cobrança não está mais ativa. Gere um novo Pix.</p> : null}
-        <ChargeActions chargeId={charge.id} qrCode={pending ? charge.qr_code : null} pending={pending} />
+        <ChargeActions chargeId={charge.id} qrCode={pending ? charge.qr_code : null} pending={pending} canRefund={charge.status === "approved" && can(ctx, "finance.manage")} />
         <Link href="/contribuir" className="text-sm text-ambar-claro underline">Voltar para contribuições</Link>
       </div>
     </>

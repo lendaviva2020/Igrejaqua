@@ -110,3 +110,15 @@ export async function getPayment(cfg: MercadoPagoConfig, providerPaymentId: stri
   if (!/^\d{1,20}$/.test(providerPaymentId)) throw new MercadoPagoError("Identificador de pagamento inválido.", null);
   return toProviderPayment(await call(cfg, `/v1/payments/${providerPaymentId}`, { method: "GET" }));
 }
+
+const RefundSchema = z.object({ id: z.union([z.number(), z.string()]).transform(String) });
+
+/**
+ * Estorno TOTAL (corpo vazio = valor integral). A chave de idempotência torna a repetição segura:
+ * o provedor devolve o mesmo estorno em vez de criar outro. O status local só muda após reconsultar o pagamento.
+ */
+export async function refundPayment(cfg: MercadoPagoConfig, providerPaymentId: string, idempotencyKey: string): Promise<{ readonly refundId: string }> {
+  if (!/^\d{1,20}$/.test(providerPaymentId)) throw new MercadoPagoError("Identificador de pagamento inválido.", null);
+  const raw = await call(cfg, `/v1/payments/${providerPaymentId}/refunds`, { method: "POST", body: "{}", idempotencyKey });
+  return { refundId: RefundSchema.parse(raw).id };
+}

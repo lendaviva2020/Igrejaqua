@@ -108,3 +108,32 @@ describe("cliente Mercado Pago (fetch simulado)", () => {
     await expect(getPayment(cfg, "../admin")).rejects.toThrow(/inválido/);
   });
 });
+
+describe("estorno Mercado Pago (fetch simulado)", () => {
+  afterEach(() => vi.unstubAllGlobals());
+  const cfg = { accessToken: "APP_USR-token-de-teste-123456", webhookSecret: secret };
+
+  it("POST integral (corpo vazio) com chave de idempotência e devolve o id do estorno", async () => {
+    const { refundPayment } = await import("@/lib/payments/mercadopago");
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify({ id: 987, payment_id: 123, status: "approved" }), { status: 201 }));
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(refundPayment(cfg, "123456", "refund-abc")).resolves.toEqual({ refundId: "987" });
+    const [url, init] = fetchMock.mock.calls[0] as [string, RequestInit];
+    expect(url).toBe("https://api.mercadopago.com/v1/payments/123456/refunds");
+    expect(init.method).toBe("POST");
+    expect(init.body).toBe("{}");
+    expect((init.headers as Record<string, string>)["X-Idempotency-Key"]).toBe("refund-abc");
+  });
+  it("rejeita id de pagamento malformado sem chamar a rede", async () => {
+    const { refundPayment } = await import("@/lib/payments/mercadopago");
+    const fetchMock = vi.fn();
+    vi.stubGlobal("fetch", fetchMock);
+    await expect(refundPayment(cfg, "12/../3", "k")).rejects.toThrow("inválido");
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+  it("propaga erro HTTP do provedor sem vazar o corpo", async () => {
+    const { refundPayment } = await import("@/lib/payments/mercadopago");
+    vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify({ message: "dados do pagador" }), { status: 400 })));
+    await expect(refundPayment(cfg, "123", "k")).rejects.toThrow(/HTTP 400\.$/);
+  });
+});
