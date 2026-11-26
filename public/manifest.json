@@ -1,0 +1,10 @@
+{
+  "name": "IGREJAQUA",
+  "short_name": "IGREJAQUA",
+  "lang": "pt-BR",
+  "start_url": "/dashboard",
+  "display": "standalone",
+  "background_color": "#F4EFE4",
+  "theme_color": "#F4EFE4",
+  "icons": []
+}
