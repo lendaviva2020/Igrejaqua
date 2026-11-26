@@ -245,6 +245,35 @@ set role authenticated;
 select tests.eq('outra igreja não vê comunicado nem notificação', (select count(*) from public.announcements_and_devotionals) + (select count(*) from public.notifications), 0);
 reset role;
 
+-- ---------- Cobranças Pix ----------
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+insert into public.pix_charges (church_id, membership_id, purpose, amount_cents) values (:'church_a', private.current_membership_id(:'church_a'), 'oferta', 5000) returning id as pix_a4 \gset
+select tests.denied('cobrança em nome de outro membro', format($q$insert into public.pix_charges (church_id, membership_id, purpose, amount_cents) values (%L, %L, 'oferta', 5000)$q$, :'church_a', :'mm_a2'));
+select tests.denied('valor abaixo do mínimo', format($q$insert into public.pix_charges (church_id, membership_id, purpose, amount_cents) values (%L, private.current_membership_id(%L), 'oferta', 50)$q$, :'church_a', :'church_a'));
+select tests.denied('cliente não define status', format($q$update public.pix_charges set status = 'approved' where id = %L$q$, :'pix_a4'));
+select tests.denied('cliente não grava provider_payment_id', format($q$insert into public.pix_charges (church_id, membership_id, purpose, amount_cents, provider_payment_id) values (%L, private.current_membership_id(%L), 'oferta', 5000, '1')$q$, :'church_a', :'church_a'));
+select tests.eq('pagador vê a própria cobrança', (select count(*) from public.pix_charges), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.eq('outro membro NÃO vê cobrança alheia', (select count(*) from public.pix_charges), 0);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select tests.eq('líder (não admin) NÃO vê cobranças', (select count(*) from public.pix_charges), 0);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+select tests.eq('admin vê cobranças da igreja', (select count(*) from public.pix_charges), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.eq('admin de outra igreja não vê', (select count(*) from public.pix_charges), 0);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+select tests.eq('mudanças de cobrança são auditadas (só nomes de colunas)', (select count(*) from public.audit_logs where entity_table = 'pix_charges'), 1);
+
 -- ---------- Eventos: função respeita permissão e fuso da igreja ----------
 select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
 set role authenticated;

@@ -51,4 +51,13 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await page.keyboard.press("Tab");
     await expect(page.getByLabel("Senha")).toBeFocused();
   });
+
+  test("webhook do Pix é público (não redireciona ao login) e nunca aceita sem configuração/assinatura", async ({ request }) => {
+    const res = await request.post("/api/webhooks/mercadopago?data.id=123&type=payment", { data: { type: "payment", data: { id: "123" } }, maxRedirects: 0 });
+    expect([401, 503]).toContain(res.status());
+  });
+  test("webhook rejeita GET", async ({ request }) => {
+    const res = await request.get("/api/webhooks/mercadopago", { maxRedirects: 0 });
+    expect(res.status()).toBe(405);
+  });
 });

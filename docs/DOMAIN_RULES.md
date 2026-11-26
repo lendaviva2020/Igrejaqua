@@ -39,7 +39,7 @@ Status: **PENDING_REVIEW**. Cada regra tem ID para rastrear em testes (`tests/un
 - **R-26** Presença: `unique (session, membership)`; self check-in permitido na janela [início−60 min, fim].
 
 ## PIX
-- **R-27** `contributions` é informativa. O sistema **não** processa pagamentos, não coleta valor nem identifica pagador. O BR Code estático é gerado no servidor conforme o manual do BCB (a validar com biblioteca/implementação testada contra o validador oficial — NOT_IMPLEMENTED).
+- **R-27** (revisada) Contribuições online ocorrem por **Pix via Mercado Pago** (`pix_charges`). O app nunca vê dados bancários; guarda apenas valor, finalidade, status e ids do provedor, **sem CPF/e-mail**. Visível só ao pagador e à administração (RLS). Status vem da API do provedor (webhook assinado por HMAC é só gatilho); estados finais não retrocedem. Sem as chaves `MERCADOPAGO_*` o recurso fica desativado. `contributions` (BR Code estático informativo) permanece sem uso. **Dado financeiro por pessoa: revisão LGPD obrigatória antes de produção.**
 
 ## Tempo
 - **R-28** Todas as comparações de data usam `timestamptz`; regras de "dia" usam `churches.timezone`. Horário de verão não deve alterar sessões já criadas.

@@ -12,6 +12,9 @@ const serverSchema = z.object({
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().min(1).optional(),
   CRON_SECRET: z.string().min(16).optional(),
+  /** Pix via Mercado Pago: opcionais — sem eles a contribuição online fica desativada (nunca quebra o app). */
+  MERCADOPAGO_ACCESS_TOKEN: z.string().min(20).optional(),
+  MERCADOPAGO_WEBHOOK_SECRET: z.string().min(8).optional(),
 });
 
 /** Variáveis públicas (seguro em qualquer ambiente). Falha cedo e com mensagem clara. */

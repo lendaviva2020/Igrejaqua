@@ -1,0 +1,78 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { z } from "zod";
+import { requireUser, resolveChurchContext } from "@/lib/auth/context";
+import { publicEnv } from "@/lib/env";
+import { createPixPayment, mercadoPagoConfig, MercadoPagoError } from "@/lib/payments/mercadopago";
+import { fail, fromPostgrestError, ok, zodFieldErrors, type Result } from "@/lib/result";
+import { allow } from "@/lib/security/rate-limit";
+import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { ChargeIdSchema, CreateChargeSchema, PURPOSE_LABEL } from "./schemas";
+import { attachProviderPayment, markChargeCancelled } from "./provider-writes";
+import { syncChargeFromProvider } from "./sync";
+
+const InsertedRow = z.object({ id: z.string().uuid(), idempotency_key: z.string().uuid() });
+
+export async function createPixChargeAction(input: unknown): Promise<Result<{ chargeId: string }>> {
+  const parsed = CreateChargeSchema.safeParse(input);
+  if (!parsed.success) return fail("VALIDATION", "Dados inválidos.", zodFieldErrors(parsed.error.issues));
+  const cfg = mercadoPagoConfig();
+  if (cfg === null) return fail("UNAVAILABLE", "Contribuições online ainda não estão disponíveis nesta igreja.");
+  const ctx = await resolveChurchContext();
+  if (!(await allow(`pix:${ctx.userId}`, 5, 3600))) return fail("RATE_LIMITED", "Muitas tentativas. Tente novamente mais tarde.");
+  const user = await requireUser();
+  if (user.email.length === 0) return fail("VALIDATION", "Sua conta precisa de um e-mail para gerar o Pix.");
+
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("pix_charges")
+    .insert({ church_id: ctx.churchId, membership_id: ctx.membershipId, purpose: parsed.data.purpose, amount_cents: parsed.data.amountCents })
+    .select("id, idempotency_key")
+    .single();
+  if (error) return fromPostgrestError(error);
+  const charge = InsertedRow.parse(data);
+
+  const site = publicEnv().NEXT_PUBLIC_SITE_URL;
+  try {
+    const payment = await createPixPayment(cfg, {
+      amountCents: parsed.data.amountCents,
+      description: `${PURPOSE_LABEL[parsed.data.purpose]} — ${ctx.churchName}`.slice(0, 120),
+      payerEmail: user.email,
+      externalReference: charge.id,
+      idempotencyKey: charge.idempotency_key,
+      notificationUrl: site.startsWith("https://") ? `${site}/api/webhooks/mercadopago` : null, // exige HTTPS público
+      expiresInMinutes: 30,
+    });
+    await attachProviderPayment({ churchId: ctx.churchId, chargeId: charge.id, providerPaymentId: payment.providerPaymentId, qrCode: payment.qrCode, ticketUrl: payment.ticketUrl, expiresAt: payment.expiresAt });
+  } catch (cause) {
+    await markChargeCancelled(ctx.churchId, charge.id).catch(() => undefined);
+    console.error("pix_charge_failed", cause instanceof MercadoPagoError ? cause.message : "erro interno");
+    return fail("UNAVAILABLE", "Não foi possível gerar o Pix agora. Tente novamente em instantes.");
+  }
+  revalidatePath("/contribuir");
+  return ok({ chargeId: charge.id });
+}
+
+/** Consulta o provedor e atualiza o status (fallback ao webhook). Só quem enxerga a cobrança (RLS) pode acionar. */
+export async function refreshChargeAction(input: unknown): Promise<Result<{ refreshed: true }>> {
+  const parsed = ChargeIdSchema.safeParse(input);
+  if (!parsed.success) return fail("VALIDATION", "Cobrança inválida.");
+  const cfg = mercadoPagoConfig();
+  if (cfg === null) return fail("UNAVAILABLE", "Contribuições online não estão configuradas.");
+  const ctx = await resolveChurchContext();
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("pix_charges").select("provider_payment_id").eq("church_id", ctx.churchId).eq("id", parsed.data.chargeId).maybeSingle();
+  if (error) return fromPostgrestError(error);
+  const providerId = data === null ? null : (data as { provider_payment_id: string | null }).provider_payment_id;
+  if (providerId === null) return fail("NOT_FOUND", "Cobrança não encontrada.");
+  try {
+    await syncChargeFromProvider(cfg, providerId);
+  } catch (cause) {
+    console.error("pix_refresh_failed", cause instanceof MercadoPagoError ? cause.message : "erro interno");
+    return fail("UNAVAILABLE", "Não foi possível consultar o pagamento agora.");
+  }
+  revalidatePath(`/contribuir/${parsed.data.chargeId}`);
+  revalidatePath("/contribuir");
+  return ok({ refreshed: true });
+}

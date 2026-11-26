@@ -35,7 +35,7 @@ Ver `RBAC.md`. Resumo: papel de igreja (`admin|leader|member`) em `church_member
 
 ## 6. Service role e segredos
 - `SUPABASE_SERVICE_ROLE_KEY` e `DEEPSEEK_API_KEY`: apenas variáveis de ambiente do servidor (sem prefixo `NEXT_PUBLIC_`), arquivo `lib/supabase/admin.ts` com `import 'server-only'`.
-- Usos permitidos do service role (lista fechada): aceite de convite, job de retenção/anonimização LGPD, gravação de `ai_generation_runs`, rate limiting. Cada uso grava `audit_logs`.
+- Usos permitidos do service role (lista fechada): aceite de convite, job de retenção/anonimização LGPD, gravação de `ai_generation_runs`, rate limiting, **escrita de status/QR de `pix_charges` pelo servidor** (`modules/contributions/provider-writes.ts`, único arquivo permitido do módulo; webhook Mercado Pago validado por HMAC e conferido na API do provedor). Cada uso grava `audit_logs`.
 - Teste CI: grep falha se `service_role`/`DEEPSEEK` aparecer em bundle cliente (`.next/static`).
 - `.env.example` só com nomes; `gitleaks` no CI; rotação documentada.
 

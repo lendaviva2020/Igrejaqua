@@ -1,6 +1,6 @@
 export type ErrorCode =
   | "UNAUTHENTICATED" | "FORBIDDEN" | "NOT_FOUND" | "VALIDATION" | "CONFLICT"
-  | "RULE_VIOLATION" | "RATE_LIMITED" | "AI_UNAVAILABLE" | "INTERNAL";
+  | "RULE_VIOLATION" | "RATE_LIMITED" | "AI_UNAVAILABLE" | "UNAVAILABLE" | "INTERNAL";
 
 export interface AppError {
   readonly code: ErrorCode;

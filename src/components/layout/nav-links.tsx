@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, CalendarOff, HandHeart, LayoutDashboard, Library, Megaphone, Users, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, CalendarOff, HandHeart, HeartHandshake, LayoutDashboard, Library, Megaphone, Users, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export interface NavItem { readonly href: string; readonly label: string; readonly bottom?: boolean; readonly badge?: number; readonly icon: "comunicados" | "notificacoes" | "painel" | "agenda" | "ministerios" | "repertorio" | "disponibilidade" | "oracao" }
-const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart, comunicados: Megaphone, notificacoes: Bell };
+export interface NavItem { readonly href: string; readonly label: string; readonly bottom?: boolean; readonly badge?: number; readonly icon: "contribuir" | "comunicados" | "notificacoes" | "painel" | "agenda" | "ministerios" | "repertorio" | "disponibilidade" | "oracao" }
+const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart, comunicados: Megaphone, contribuir: HeartHandshake, notificacoes: Bell };
 
 export function NavLinks({ items, orientation }: { items: readonly NavItem[]; orientation: "side" | "bottom" }) {
   const pathname = usePathname();

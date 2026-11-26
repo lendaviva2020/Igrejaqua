@@ -38,3 +38,8 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 
 ## Bloqueios externos
 - **Push para GitHub:** o repositório `lendaviva2020/igrejaqua` não está acessível nesta sessão (lista de repositórios vazia; token inválido). Commits existem apenas localmente.
+
+## Atualização — Pix via Mercado Pago (Gate 4/5)
+- Implementado: `pix_charges` (RLS: pagador + admin; cliente só cria intenção), cliente Mercado Pago (`POST /v1/payments`, `X-Idempotency-Key`, expiração -03:00), webhook `/api/webhooks/mercadopago` (HMAC-SHA256 do manifesto `id;request-id;ts`, comparação em tempo constante; status relido na API do provedor; confere `external_reference` e valor), páginas `/contribuir` e `/contribuir/[chargeId]` (QR em SVG, copia e cola, verificação automática).
+- **Não verificado contra o provedor real**: sem chaves, só testado com `fetch` simulado e testes SQL. Pendente: configurar `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET`, cadastrar a URL do webhook no painel e testar em sandbox antes de produção.
+- Pendente: revisão LGPD do dado financeiro por pessoa; conciliação/relatório exportável; estorno pelo app; notificação ao administrador.
