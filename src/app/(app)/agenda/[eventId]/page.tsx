@@ -13,6 +13,8 @@ import { getAttendance } from "@/modules/attendance/queries";
 import { isCheckInOpen } from "@/modules/attendance/schemas";
 import { AttendancePanel } from "./attendance-panel";
 import { LineupPanel } from "./lineup-panel";
+import { AiSchedulePanel } from "@/components/ai/ai-schedule-panel";
+import { getAiState } from "@/modules/settings/queries";
 import { RsvpButtons } from "./rsvp-buttons";
 import { SetlistPanel } from "./setlist-panel";
 import { SessionForm } from "./session-form";
@@ -28,7 +30,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
   const sessionIds = event.event_sessions.map((x) => x.id);
   const canSetlist = can(ctx, "setlist.manage");
   const canRecordOthers = can(ctx, "attendance.record.others");
-  const [tz, ministries, lineup, setlist, rsvp, attendance, versionOptions] = await Promise.all([
+  const [tz, ministries, lineup, setlist, rsvp, attendance, versionOptions, ai] = await Promise.all([
     getChurchTimezone(ctx.churchId),
     listMinistries(ctx.churchId),
     listLineupForSessions(ctx.churchId, ctx.membershipId, sessionIds),
@@ -36,6 +38,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
     getRsvpSummary(ctx.churchId, ctx.membershipId, sessionIds),
     getAttendance(ctx.churchId, ctx.membershipId, sessionIds, canRecordOthers),
     canSetlist ? listPublishedVersionOptions(ctx.churchId) : Promise.resolve([]),
+    getAiState(ctx.churchId),
   ]);
   const relevantMinistries = ministries.filter((m) => can(ctx, "schedule.edit", m.id) || lineup.some((l) => l.ministryId === m.id));
   const people = await listPeopleForMinistries(ctx.churchId, relevantMinistries.map((m) => m.id));
@@ -61,6 +64,9 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
               canPublish={can(ctx, "schedule.publish", m.id)}
             />
           ))}
+          {ai.enabled && ai.configured && s.ministry_id !== null && can(ctx, "schedule.edit", s.ministry_id) ? (
+            <AiSchedulePanel sessionId={s.id} ministryName={ministries.find((m) => m.id === s.ministry_id)?.name ?? "Ministério"} />
+          ) : null}
         </article>
       ))}
       {can(ctx, "event.manage") ? <section aria-labelledby="ns" className="mt-8"><h2 id="ns" className="mb-3 text-2xl">Nova sessão</h2><SessionForm eventId={event.id} /></section> : null}

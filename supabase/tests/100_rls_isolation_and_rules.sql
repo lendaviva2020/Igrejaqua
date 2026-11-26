@@ -606,6 +606,32 @@ select tests.denied('escrita direta em ai_generation_runs negada', format($q$upd
 reset role;
 select tests.eq('aceite não publicou nada', (select count(*) from public.event_lineup where ai_run_id = :'run_ai' and status <> 'draft'), 0);
 
+
+-- ---------- Ativação da IA: só admin, via função, com consentimento registrado ----------
+update public.church_settings set ai_enabled = false, ai_data_sharing_consent_at = null where church_id = :'church_a';
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select tests.denied('líder não ativa IA', format($q$select public.set_church_ai(%L, true, 'ia-v1')$q$, :'church_a'));
+select tests.denied('líder não liga IA por update direto', format($q$update public.church_settings set ai_enabled = true where church_id = %L$q$, :'church_a'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+select tests.denied('admin não liga IA por update direto (sem consentimento)', format($q$update public.church_settings set ai_enabled = true, ai_data_sharing_consent_at = now() where church_id = %L$q$, :'church_a'));
+select tests.denied('termo sem versão', format($q$select public.set_church_ai(%L, true, '')$q$, :'church_a'));
+select public.set_church_ai(:'church_a', true, 'ia-v1');
+select tests.eq('IA ligada com consentimento datado', (select count(*) from public.church_settings where church_id = :'church_a' and ai_enabled and ai_data_sharing_consent_at is not null), 1);
+select tests.eq('consentimento registrado', (select count(*) from public.consent_records where church_id = :'church_a' and purpose = 'ai_data_sharing' and granted and version = 'ia-v1' and user_id = '00000000-0000-0000-0000-0000000000a1'), 1);
+with u as (update public.church_settings set rotation_policy = rotation_policy where church_id = :'church_a' returning 1)
+select tests.eq('admin ainda altera a política de rotação', (select count(*) from u), 1);
+select public.set_church_ai(:'church_a', false, 'ia-v1');
+select tests.eq('IA desligada revoga o consentimento', (select count(*) from public.church_settings where church_id = :'church_a' and not ai_enabled and ai_data_sharing_consent_at is null), 1);
+select tests.eq('revogação registrada', (select count(*) from public.consent_records where church_id = :'church_a' and purpose = 'ai_data_sharing' and not granted), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.denied('admin de outra igreja não ativa IA', format($q$select public.set_church_ai(%L, true, 'ia-v1')$q$, :'church_a'));
+reset role;
+
 -- ---------- Auditoria imutável; anon sem acesso ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;

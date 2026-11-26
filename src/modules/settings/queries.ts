@@ -1,6 +1,7 @@
 import "server-only";
 import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import { parseAiConfig } from "@/lib/ai/config";
 import { DSR_KINDS } from "./schemas";
 
 const Profile = z.object({ full_name: z.string(), display_name: z.string().nullable(), phone: z.string().nullable() });
@@ -36,4 +37,19 @@ export async function listDataRequests(churchId: string, currentUserId: string):
   if (reqs.error) throw new Error(`Falha ao listar pedidos: ${reqs.error.message}`);
   const names = new Map(dir.error ? [] : z.array(Dir).parse(dir.data).map((d) => [d.user_id, d.display_name]));
   return z.array(Dsr).parse(reqs.data).map((r) => ({ id: r.id, kind: r.kind, status: r.status, details: r.details, dueAt: r.due_at, createdAt: r.created_at, requester: names.get(r.user_id) ?? "Pessoa", mine: r.user_id === currentUserId }));
+}
+
+export interface AiState {
+  /** A administração ativou a IA (com consentimento registrado). */
+  readonly enabled: boolean;
+  /** O servidor tem chave e modelo configurados; sem isso nenhuma sugestão é possível. */
+  readonly configured: boolean;
+}
+
+export async function getAiState(churchId: string): Promise<AiState> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("church_settings").select("ai_enabled, ai_data_sharing_consent_at").eq("church_id", churchId).maybeSingle();
+  if (error) throw new Error(`Falha ao ler configuração de IA: ${error.message}`);
+  const row = z.object({ ai_enabled: z.boolean(), ai_data_sharing_consent_at: z.string().nullable() }).nullable().parse(data);
+  return { enabled: row !== null && row.ai_enabled && row.ai_data_sharing_consent_at !== null, configured: parseAiConfig(process.env) !== null };
 }

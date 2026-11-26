@@ -6,7 +6,7 @@ import { can } from "@/lib/permissions/capabilities";
 import { fail, fromPostgrestError, ok, zodFieldErrors, type Result } from "@/lib/result";
 import { allow } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { CreateDsrSchema, ResolveDsrSchema, UpdateChurchSchema, UpdateProfileSchema } from "./schemas";
+import { AI_CONSENT_VERSION, CreateDsrSchema, ResolveDsrSchema, SetChurchAiSchema, UpdateChurchSchema, UpdateProfileSchema } from "./schemas";
 
 export async function updateProfileAction(input: unknown): Promise<Result<{ updated: true }>> {
   const parsed = UpdateProfileSchema.safeParse(input);
@@ -65,4 +65,18 @@ export async function resolveDsrAction(input: unknown): Promise<Result<{ status:
   if ((data as unknown[]).length === 0) return fail("NOT_FOUND", "Pedido não encontrado.");
   revalidatePath("/configuracoes");
   return ok({ status: parsed.data.status });
+}
+
+/** Liga/desliga a IA da igreja. Só a administração; o banco registra o consentimento (set_church_ai). */
+export async function setChurchAiAction(input: unknown): Promise<Result<{ enabled: boolean }>> {
+  const parsed = SetChurchAiSchema.safeParse(input);
+  if (!parsed.success) return fail("VALIDATION", "Confirme o aviso para ativar a IA.", zodFieldErrors(parsed.error.issues));
+  const ctx = await resolveChurchContext();
+  if (!can(ctx, "church.settings.update")) return fail("FORBIDDEN", "Apenas a administração altera o uso de IA.");
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("set_church_ai", { p_church: ctx.churchId, p_enabled: parsed.data.enabled, p_consent_version: AI_CONSENT_VERSION });
+  if (error) return fromPostgrestError(error);
+  revalidatePath("/configuracoes");
+  revalidatePath("/agenda", "layout");
+  return ok({ enabled: parsed.data.enabled });
 }

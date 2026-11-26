@@ -1,6 +1,6 @@
 # IGREJAQUA — Motor de IA (domínio separado)
 
-Status: **PENDING_REVIEW**. Nada disso está implementado; não há integração falsa.
+Status: **escala inteligente implementada** (demais capacidades NOT_IMPLEMENTED). Sem integração falsa: sem `DEEPSEEK_API_KEY` + `DEEPSEEK_MODEL` nenhuma sugestão é gerada.
 
 ## 1. Princípios
 1. A IA é **consultiva**. Nunca decide segurança, elegibilidade ou publicação.
@@ -71,5 +71,13 @@ Controles: `church_settings.ai_enabled` (padrão **false**), consentimento regis
 ## 8. API DeepSeek
 Usar a API oficial (documentação em api-docs.deepseek.com), compatível com SDK estilo OpenAI. **Nomes de modelo, URL-base, limites e preços não foram verificados neste Gate** (PENDING_REVIEW); ficam em `config/ai.ts` + variáveis de ambiente e são confirmados no Gate 5 com chamada real de homologação.
 
+## 9. Implementado (escala)
+- `src/lib/ai`: `config`, `client` (timeout 30 s, retry 2x com backoff, disjuntor), `prompts/schedule` (`schedule-v1`), `collectors/schedule` (RLS do usuário), `schedule-context` (candidatos, rotação, pseudonimização, resolução da saída), `validators/schedule`, `orchestrator`.
+- Rotas: `POST /api/ai/schedule` (gera e valida) e `POST /api/ai/runs/{id}` (`accept` cria `event_lineup` em **draft**, `source='ai'`; `discard`). Rate limit: 10/h por usuário e 60/dia por igreja.
+- Banco (sem service role): `ai_begin_schedule_run`, `ai_finish_run`, `ai_accept_schedule_run`, `ai_discard_run`, `set_church_ai` (consentimento em `consent_records`; `ai_enabled` só muda por essa função).
+- Rótulos livres (instrumentos/funções) passam por `sanitizeLabel` antes de entrar no prompt (injeção).
+- Não implementado: reenvio automático de violações (§4), rotação justa como capacidade própria, repertório, tom vocal, plano de ensaio, transições, orçamento mensal por igreja.
+- Não exercitado contra serviços reais: nenhuma chamada real à DeepSeek e nenhuma sessão Supabase real.
+
 ## Classificação
-Arquitetura: PENDING_REVIEW · Implementação: NOT_IMPLEMENTED · Parecer LGPD de transferência: BLOCKED (para ativar IA em produção).
+Arquitetura: PENDING_REVIEW · Implementação: parcial (escala) · Parecer LGPD de transferência: BLOCKED (para ativar IA em produção; a tela de ativação exibe o aviso e registra o consentimento).

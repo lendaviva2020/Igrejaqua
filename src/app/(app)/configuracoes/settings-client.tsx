@@ -4,7 +4,7 @@ import { useRouter } from "next/navigation";
 import { useState, useTransition } from "react";
 import { FormField } from "@/components/shared/form-field";
 import { Button } from "@/components/ui/button";
-import { createDsrAction, resolveDsrAction, updateChurchAction, updateProfileAction } from "@/modules/settings/actions";
+import { createDsrAction, resolveDsrAction, setChurchAiAction, updateChurchAction, updateProfileAction } from "@/modules/settings/actions";
 import { DSR_KINDS, DSR_KIND_LABEL, UpdateChurchSchema, UpdateProfileSchema } from "@/modules/settings/schemas";
 
 function useAction() {
@@ -100,5 +100,29 @@ export function DsrAdminRow({ id, requester, kind, status, statusLabel, details,
       ) : null}
       <Feedback error={a.error} saved={false} />
     </li>
+  );
+}
+
+export function AiSettings({ enabled, configured }: { enabled: boolean; configured: boolean }) {
+  const a = useAction();
+  const [ack, setAck] = useState(false);
+  return (
+    <div className="max-w-prose rounded-superficie border border-linha bg-superficie p-5">
+      <p className="font-medium">{enabled ? "IA ativada para esta igreja" : "IA desativada"}</p>
+      <p className="mt-1 text-sm text-texto-2">A IA só sugere. Uma pessoa da liderança revisa, e nada é publicado sem isso. O sistema funciona normalmente sem ela.</p>
+      {!configured ? <p className="mt-3 text-sm text-texto-2">O servidor ainda não tem a chave do provedor de IA configurada; ativar aqui não envia nada enquanto isso.</p> : null}
+      {enabled ? (
+        <div className="mt-4"><Button variant="secondary" disabled={a.pending} onClick={() => a.run(() => setChurchAiAction({ enabled: false, acknowledged: false }))}>Desativar IA</Button></div>
+      ) : (
+        <div className="mt-4 flex flex-col gap-3">
+          <label className="flex items-start gap-3 text-sm">
+            <input type="checkbox" checked={ack} onChange={(e) => setAck(e.target.checked)} className="mt-1 size-5 accent-ambar" />
+            <span>Entendo que, ao usar a IA, dados mínimos e pseudonimizados da escala (funções, disponibilidade sim/não e contagens, sem nomes, contatos ou pedidos de oração) serão enviados a um provedor de IA que pode estar fora do Brasil, e que a liderança é responsável por revisar cada sugestão.</span>
+          </label>
+          <div><Button disabled={!ack || a.pending} onClick={() => a.run(() => setChurchAiAction({ enabled: true, acknowledged: ack }))}>Ativar IA</Button></div>
+        </div>
+      )}
+      <Feedback error={a.error} saved={a.saved} />
+    </div>
   );
 }

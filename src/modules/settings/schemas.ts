@@ -33,3 +33,7 @@ export const UpdateChurchSchema = z
 
 export const CreateDsrSchema = z.object({ kind: z.enum(DSR_KINDS), details: z.string().trim().max(2000).optional() }).strict();
 export const ResolveDsrSchema = z.object({ requestId: z.string().uuid(), status: z.enum(["in_progress", "done", "rejected"]) }).strict();
+
+/** Versão do termo de uso de IA exibido ao administrador; registrada em consent_records. */
+export const AI_CONSENT_VERSION = "ia-v1";
+export const SetChurchAiSchema = z.object({ enabled: z.boolean(), acknowledged: z.boolean() }).strict().refine((v) => !v.enabled || v.acknowledged, { message: "Confirme o aviso para ativar a IA", path: ["acknowledged"] });

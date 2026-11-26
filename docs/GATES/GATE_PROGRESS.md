@@ -88,3 +88,9 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - Logout (`SignOutForm`) envia `CLEAR_CACHES` ao service worker; o `sw.js` é servido com `no-cache`.
 - Testes E2E (`tests/e2e/pwa.spec.ts`): manifest/ícones, cabeçalho do sw, fallback offline, rotas protegidas fora do cache, limpeza de caches. Total E2E: 42 passando.
 - Limite: o cache do Modo Palco offline não foi exercitado com sessão real (depende do Supabase); push notifications não implementado.
+
+### Motor de IA — escala consultiva
+- Migrations `20261126001400_ai_engine.sql` e `20261126001500_ai_consent.sql`; pgTAP/SQL ampliado (execução, aceite só validado, rascunho `draft/source=ai`, sem escrita direta, consentimento, revogação, isolamento entre igrejas).
+- Pipeline `src/lib/ai/*`, rotas `/api/ai/schedule` e `/api/ai/runs/[runId]`, ativação em Configurações (admin) e painel "Sugestão por IA" na sessão (só com IA ativa, configurada e permissão `schedule.edit`).
+- Testes: 147+ unitários (cliente com retry/disjuntor/truncamento, pseudonimização sem vazamento, rotação, injeção, validação) e guarda E2E das rotas.
+- Limites: sem chamada real ao provedor (chave e modelo pendentes); parecer jurídico LGPD pendente antes de usar em produção.

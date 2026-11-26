@@ -2,9 +2,9 @@ import type { Metadata } from "next";
 import { resolveChurchContext } from "@/lib/auth/context";
 import { can } from "@/lib/permissions/capabilities";
 import { PageHeader } from "@/components/shared/page-header";
-import { getChurchData, getMyProfile, listDataRequests } from "@/modules/settings/queries";
+import { getAiState, getChurchData, getMyProfile, listDataRequests } from "@/modules/settings/queries";
 import { NewPasswordForm } from "../../(auth)/redefinir-senha/new-password-form";
-import { ChurchForm, DsrAdminRow, DsrForm, ProfileForm } from "./settings-client";
+import { AiSettings, ChurchForm, DsrAdminRow, DsrForm, ProfileForm } from "./settings-client";
 import { DSR_KIND_LABEL, DSR_STATUS_LABEL } from "@/modules/settings/schemas";
 
 export const metadata: Metadata = { title: "Configurações" };
@@ -13,7 +13,7 @@ const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short
 export default async function SettingsPage() {
   const ctx = await resolveChurchContext();
   const isAdmin = can(ctx, "church.settings.update");
-  const [profile, church, requests] = await Promise.all([getMyProfile(ctx.userId), isAdmin ? getChurchData(ctx.churchId) : Promise.resolve(null), listDataRequests(ctx.churchId, ctx.userId)]);
+  const [profile, church, requests, ai] = await Promise.all([getMyProfile(ctx.userId), isAdmin ? getChurchData(ctx.churchId) : Promise.resolve(null), listDataRequests(ctx.churchId, ctx.userId), isAdmin ? getAiState(ctx.churchId) : Promise.resolve(null)]);
   const mine = requests.filter((r) => r.mine);
   const toHandle = requests.filter((r) => !r.mine || isAdmin);
   return (
@@ -38,6 +38,7 @@ export default async function SettingsPage() {
         {isAdmin && church !== null ? (
           <>
             <section aria-labelledby="igreja"><h2 id="igreja" className="mb-3 text-2xl">Dados da igreja</h2><ChurchForm initial={{ name: church.name, legalName: church.legal_name ?? "", documentNumber: church.document_number ?? "", timezone: church.timezone }} /></section>
+            {ai !== null ? <section aria-labelledby="ia"><h2 id="ia" className="mb-3 text-2xl">Inteligência artificial</h2><AiSettings enabled={ai.enabled} configured={ai.configured} /></section> : null}
             <section aria-labelledby="pedidos">
               <h2 id="pedidos" className="mb-3 text-2xl">Pedidos de titulares</h2>
               {toHandle.length === 0 ? <p className="text-texto-2">Nenhum pedido recebido.</p> : (

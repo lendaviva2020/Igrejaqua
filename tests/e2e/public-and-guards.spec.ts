@@ -28,6 +28,13 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await expect(page).toHaveURL(/\/login\?next=%2Fselecionar-igreja%3Fconvite%3Dabc123$/);
   });
 
+  test("rotas de IA exigem login (sem sessão não chegam ao provedor)", async ({ request }) => {
+    const gerar = await request.post("/api/ai/schedule", { data: { sessionId: "11111111-1111-4111-8111-111111111111", slots: [{ function: "voz", count: 1 }] }, maxRedirects: 0 });
+    expect(gerar.status()).toBe(307);
+    const aceitar = await request.post("/api/ai/runs/11111111-1111-4111-8111-111111111111", { data: { action: "accept" }, maxRedirects: 0 });
+    expect(aceitar.status()).toBe(307);
+  });
+
   test("landing, privacidade e termos são públicos e sem dados fictícios", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();
