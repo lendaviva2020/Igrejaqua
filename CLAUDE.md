@@ -21,4 +21,4 @@ Arquitetura `docs/ARCHITECTURE.md` · Banco `docs/DATABASE.md` · RBAC `docs/RBA
 `vercel-react-best-practices`, `vercel-composition-patterns`, `vercel-react-view-transitions`, `web-design-guidelines`, `frontend-design`, `skill-creator`. Use `frontend-design` ao criar UI e `web-design-guidelines` + `vercel-react-best-practices` ao revisá-la.
 
 ## Design
-Direção "Caderno de Culto" (`docs/UX_DESIGN.md`): papel quente, filete duplo, serifa + grotesca humanista, acento único cobre. Proibido gradiente exagerado, neon, brilho, glassmorphism, emoji como ícone, cards repetitivos, gráficos fictícios.
+Direção "Noite & Âmbar" (`docs/UX_DESIGN.md`, decisão do responsável): tema escuro azul-noite, âmbar como cor de marca, cartões arredondados, botões em pílula, navegação inferior no mobile. Use apenas os tokens de `globals.css` (`fundo`, `superficie`, `texto`, `ambar`, `sucesso`, `perigo`…). Proibido: neon, emoji como ícone, fotos/números/eventos fictícios, gráficos de exemplo.

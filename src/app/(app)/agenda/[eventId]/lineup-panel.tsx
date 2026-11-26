@@ -40,15 +40,15 @@ export function LineupPanel({ sessionId, ministryId, ministryName, items, people
   };
 
   return (
-    <section aria-label={`Escala — ${ministryName}`} className="border-t border-linha py-4">
+    <section aria-label={`Escala — ${ministryName}`} className="mt-2 border-t border-linha py-4">
       <h4 className="mb-2 text-lg">{ministryName}</h4>
-      {items.length === 0 ? <p className="text-sm text-tinta-2">Ninguém escalado ainda.</p> : (
+      {items.length === 0 ? <p className="text-sm text-texto-2">Ninguém escalado ainda.</p> : (
         <ul className="divide-y divide-linha">
           {items.map((i) => (
             <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-              <span><span className="font-medium">{i.personName}</span> <span className="text-sm text-tinta-2">· {i.function}</span></span>
+              <span><span className="font-medium">{i.personName}</span> <span className="text-sm text-texto-2">· {i.function}</span></span>
               <span className="flex items-center gap-2">
-                <span className="text-sm text-tinta-2">{LINEUP_STATUS_LABEL[i.status] ?? i.status}</span>
+                <span className="text-sm text-texto-2">{LINEUP_STATUS_LABEL[i.status] ?? i.status}</span>
                 {i.mine && i.status === "published" ? (
                   <>
                     <Button type="button" disabled={pending} onClick={() => run(() => respondLineupAction({ lineupId: i.id, response: "confirmed" }))}>Confirmar</Button>
@@ -74,17 +74,17 @@ export function LineupPanel({ sessionId, ministryId, ministryName, items, people
           }}
         >
           <label className="flex flex-col gap-1 text-sm">Pessoa
-            <select value={person} onChange={(e) => setPerson(e.target.value)} className="min-h-11 rounded-controle border border-tinta-2 bg-superficie px-3">
+            <select value={person} onChange={(e) => setPerson(e.target.value)} className="min-h-11 rounded-controle border border-borda bg-fundo px-3">
               <option value="">Selecione…</option>
               {people.map((p) => <option key={p.ministryMembershipId} value={p.ministryMembershipId}>{p.name}{p.instruments.length ? ` (${p.instruments.join(", ")})` : ""}</option>)}
             </select>
           </label>
           <label className="flex flex-col gap-1 text-sm">Função
-            <input value={fn} onChange={(e) => setFn(e.target.value)} maxLength={60} className="min-h-11 rounded-controle border border-tinta-2 bg-superficie px-3" />
+            <input value={fn} onChange={(e) => setFn(e.target.value)} maxLength={60} className="min-h-11 rounded-controle border border-borda bg-fundo px-3" />
           </label>
           {needsOverride ? (
             <label className="flex flex-col gap-1 text-sm">Justificativa da exceção
-              <input value={override} onChange={(e) => setOverride(e.target.value)} maxLength={500} className="min-h-11 rounded-controle border border-tinta-2 bg-superficie px-3" />
+              <input value={override} onChange={(e) => setOverride(e.target.value)} maxLength={500} className="min-h-11 rounded-controle border border-borda bg-fundo px-3" />
             </label>
           ) : null}
           <Button type="submit" disabled={pending}>Escalar</Button>
@@ -93,7 +93,7 @@ export function LineupPanel({ sessionId, ministryId, ministryName, items, people
       {canPublish && drafts > 0 ? (
         <Button type="button" className="mt-3" disabled={pending} onClick={() => run(() => publishLineupAction({ sessionId, ministryId }))}>Publicar escala ({drafts})</Button>
       ) : null}
-      {error ? <p role="alert" className="mt-2 text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="mt-2 text-sm text-perigo">{error}</p> : null}
     </section>
   );
 }

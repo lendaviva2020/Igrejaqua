@@ -3,14 +3,14 @@ import type { ButtonHTMLAttributes } from "react";
 import { cn } from "@/lib/utils/cn";
 
 const button = cva(
-  "inline-flex min-h-11 items-center justify-center gap-2 rounded-controle px-4 text-sm font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50",
+  "inline-flex min-h-11 items-center justify-center gap-2 rounded-full px-5 text-sm font-semibold transition-colors disabled:cursor-not-allowed disabled:opacity-50",
   {
     variants: {
       variant: {
-        primary: "bg-cobre text-papel hover:bg-[#8f3c18]",
-        secondary: "border border-tinta-2 bg-transparent text-tinta hover:bg-superficie",
-        quiet: "bg-transparent text-nanquim hover:underline",
-        danger: "bg-vinho text-papel hover:bg-[#6f2430]",
+        primary: "bg-ambar text-sobre-ambar hover:bg-ambar-claro",
+        secondary: "border border-borda bg-transparent text-texto hover:bg-superficie-2",
+        quiet: "bg-transparent px-2 text-ambar-claro hover:underline",
+        danger: "bg-perigo text-fundo hover:brightness-110",
       },
     },
     defaultVariants: { variant: "primary" },
@@ -21,4 +21,9 @@ export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement>, Va
 
 export function Button({ className, variant, type = "button", ...props }: ButtonProps) {
   return <button type={type} className={cn(button({ variant }), className)} {...props} />;
+}
+
+/** Mesmas classes para <Link>/<a> com aparência de botão. */
+export function buttonClasses(variant: ButtonProps["variant"] = "primary", className?: string): string {
+  return cn(button({ variant }), className);
 }

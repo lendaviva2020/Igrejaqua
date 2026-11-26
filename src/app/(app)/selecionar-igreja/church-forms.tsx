@@ -45,7 +45,7 @@ export function CreateChurchForm() {
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       <FormField label="Nome da igreja" error={errors.name?.message} {...register("name")} />
       <FormField label="Endereço (identificador único)" hint="Exemplo: igreja-central" error={errors.slug?.message} {...register("slug")} />
-      {error ? <p role="alert" className="text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-perigo">{error}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Criando…" : "Criar igreja"}</Button>
     </form>
   );
@@ -66,7 +66,7 @@ export function AcceptInvitationForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-4" noValidate>
       <FormField label="Código do convite" autoComplete="off" error={errors.token?.message} {...register("token")} />
-      {error ? <p role="alert" className="text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-perigo">{error}</p> : null}
       <Button type="submit" variant="secondary" disabled={pending}>{pending ? "Verificando…" : "Entrar com convite"}</Button>
     </form>
   );

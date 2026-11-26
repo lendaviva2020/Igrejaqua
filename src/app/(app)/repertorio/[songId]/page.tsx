@@ -34,13 +34,13 @@ export default async function SongPage({ params, searchParams }: { params: Promi
         actions={<Link className="inline-flex min-h-11 items-center rounded-controle bg-palco px-4 text-sm text-palco-txt" href={`/palco/${version.id}?tom=${encodeURIComponent(target)}`}>Abrir no Palco</Link>}
       />
       <nav aria-label="Transposição" className="mb-6 flex items-center gap-3 text-sm">
-        <Link className="inline-flex min-h-11 items-center border border-tinta-2 px-3" href={`?tom=${encodeURIComponent(down)}`} aria-label={`Descer meio tom para ${down}`}>−½</Link>
+        <Link className="inline-flex min-h-11 items-center border border-borda px-3" href={`?tom=${encodeURIComponent(down)}`} aria-label={`Descer meio tom para ${down}`}>−½</Link>
         <p aria-live="polite">Tom <strong className="font-mono">{target}</strong>{shift !== 0 ? ` (${shift > 0 ? "+" : ""}${shift})` : ""}</p>
-        <Link className="inline-flex min-h-11 items-center border border-tinta-2 px-3" href={`?tom=${encodeURIComponent(up)}`} aria-label={`Subir meio tom para ${up}`}>+½</Link>
-        {target !== version.original_key ? <Link className="text-nanquim underline" href="?">Voltar ao original</Link> : null}
+        <Link className="inline-flex min-h-11 items-center border border-borda px-3" href={`?tom=${encodeURIComponent(up)}`} aria-label={`Subir meio tom para ${up}`}>+½</Link>
+        {target !== version.original_key ? <Link className="text-ambar-claro underline" href="?">Voltar ao original</Link> : null}
       </nav>
       <ChordSheet song={song} tone="paper" />
-      {version.songs.copyright_notice ? <p className="mt-8 text-xs text-tinta-2">{version.songs.copyright_notice}</p> : null}
+      {version.songs.copyright_notice ? <p className="mt-8 text-xs text-texto-2">{version.songs.copyright_notice}</p> : null}
     </>
   );
 }

@@ -34,11 +34,11 @@ export function LoginForm({ next }: { next: string | undefined }) {
       <h1 className="text-3xl">Entrar</h1>
       <FormField label="E-mail" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
       <FormField label="Senha" type="password" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
-      {formError ? <p role="alert" className="text-sm text-vinho">{formError}</p> : null}
+      {formError ? <p role="alert" className="text-sm text-perigo">{formError}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Entrando…" : "Entrar"}</Button>
       <div className="flex justify-between text-sm">
-        <Link className="text-nanquim underline" href="/recuperar-senha">Esqueci a senha</Link>
-        <Link className="text-nanquim underline" href="/cadastro">Criar conta</Link>
+        <Link className="text-ambar-claro underline" href="/recuperar-senha">Esqueci a senha</Link>
+        <Link className="text-ambar-claro underline" href="/cadastro">Criar conta</Link>
       </div>
     </form>
   );

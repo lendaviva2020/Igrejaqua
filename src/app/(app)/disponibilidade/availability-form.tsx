@@ -40,7 +40,7 @@ export function AvailabilityForm() {
         ))}
       </fieldset>
       <FormField label="Motivo (visível apenas para você e líderes autorizados)" value={reason} onChange={(e) => setReason(e.target.value)} maxLength={500} />
-      {error ? <p role="alert" className="text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-perigo">{error}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Salvando…" : "Registrar indisponibilidade"}</Button>
     </form>
   );

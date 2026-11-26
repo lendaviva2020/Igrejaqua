@@ -17,12 +17,12 @@ export default async function AvailabilityPage() {
     <>
       <PageHeader title="Disponibilidade" description="Avise os líderes quando não puder ser escalado. O motivo é privado." />
       {items.length === 0 ? <EmptyState title="Nenhuma indisponibilidade registrada">Você está disponível para todas as escalas.</EmptyState> : (
-        <ul className="divide-y divide-linha border-y border-linha">
+        <ul className="divide-y divide-linha rounded-superficie border border-linha bg-superficie px-4">
           {items.map((i) => (
             <li key={i.id} className="flex flex-wrap items-center justify-between gap-3 py-3">
               <div>
                 <p className="font-medium">{i.from === i.to ? fmt(i.from) : `${fmt(i.from)} a ${fmt(i.to)}`}{i.weekdays ? ` · ${i.weekdays.map((d) => WEEKDAY_LABELS[d]).join(", ")}` : ""}</p>
-                {i.reason ? <p className="text-sm text-tinta-2">{i.reason}</p> : null}
+                {i.reason ? <p className="text-sm text-texto-2">{i.reason}</p> : null}
               </div>
               <RemoveUnavailabilityButton id={i.id} />
             </li>

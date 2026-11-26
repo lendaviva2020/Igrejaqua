@@ -1,38 +1,45 @@
 @import "tailwindcss";
 
+/* Identidade "Noite & Âmbar" (docs/UX_DESIGN.md): azul-noite + âmbar + marfim; teal = sucesso, coral = perigo. */
 @theme {
-  --color-papel: #f4efe4;
-  --color-superficie: #fbf8f1;
-  --color-tinta: #1f1b16;
-  --color-tinta-2: #4a433a;
-  --color-nanquim: #1e3a5f;
-  --color-cobre: #a8481f;
-  --color-oliva: #4f6b2e;
-  --color-vinho: #8a2c3a;
-  --color-linha: #d9d0bf;
+  --color-fundo: #0f1420;
+  --color-superficie: #171f33;
+  --color-superficie-2: #1f2a44;
+  --color-linha: #2b3856;
+  --color-borda: #5f7098;
+  --color-texto: #f4efe6;
+  --color-texto-2: #a9b3c9;
+  --color-ambar: #f5a524;
+  --color-ambar-claro: #ffc96b;
+  --color-ambar-escuro: #d98c0a;
+  --color-sobre-ambar: #1a1204;
+  --color-sucesso: #3cc9a8;
+  --color-perigo: #f27885;
 
-  --color-palco: #0c0b09;
+  --color-palco: #0a0d14;
   --color-palco-txt: #f6f1e6;
-  --color-palco-acorde: #ffb347;
-  --color-palco-mudo: #b9b09e;
+  --color-palco-acorde: #ffc96b;
+  --color-palco-mudo: #b3bcd0;
 
-  --font-display: "Newsreader Variable", Georgia, serif;
+  --font-display: "Instrument Sans Variable", system-ui, sans-serif;
   --font-sans: "Instrument Sans Variable", system-ui, sans-serif;
   --font-mono: "IBM Plex Mono", ui-monospace, monospace;
 
-  --radius-controle: 2px;
-  --radius-superficie: 6px;
+  --radius-controle: 0.75rem;
+  --radius-superficie: 1.125rem;
 }
 
 @layer base {
-  html { background: var(--color-papel); color: var(--color-tinta); }
+  html { background: var(--color-fundo); color: var(--color-texto); color-scheme: dark; }
   body { font-family: var(--font-sans); font-size: 1rem; line-height: 1.55; -webkit-font-smoothing: antialiased; }
-  h1, h2, h3 { font-family: var(--font-display); font-weight: 500; letter-spacing: -0.01em; line-height: 1.15; }
-  :focus-visible { outline: 2px solid var(--color-nanquim); outline-offset: 2px; box-shadow: 0 0 0 4px var(--color-papel); }
+  h1, h2, h3, h4 { font-family: var(--font-display); font-weight: 600; letter-spacing: -0.015em; line-height: 1.15; }
+  ::selection { background: var(--color-ambar); color: var(--color-sobre-ambar); }
+  :focus-visible { outline: 2px solid var(--color-ambar-claro); outline-offset: 2px; }
   @media (prefers-reduced-motion: reduce) { *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; } }
 }
 
-@utility filete-duplo {
-  border-bottom: 3px double var(--color-linha);
-}
 @utility tabular { font-variant-numeric: tabular-nums; }
+/* Brilho âmbar discreto (apenas no cartão de boas-vindas e na abertura). */
+@utility brilho-ambar {
+  background-image: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--color-ambar) 26%, transparent) 0%, transparent 60%);
+}

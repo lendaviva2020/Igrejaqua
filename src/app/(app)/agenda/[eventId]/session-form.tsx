@@ -29,7 +29,7 @@ export function SessionForm({ eventId }: { eventId: string }) {
       <FormField label="Nome da sessão" hint="Ex.: Ensaio, Culto da manhã" error={errors.name?.message} {...register("name")} />
       <FormField label="Início" type="datetime-local" error={errors.startsLocal?.message} {...register("startsLocal")} />
       <FormField label="Fim" type="datetime-local" error={errors.endsLocal?.message} {...register("endsLocal")} />
-      {error ? <p role="alert" className="text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-perigo">{error}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Salvando…" : "Adicionar sessão"}</Button>
     </form>
   );

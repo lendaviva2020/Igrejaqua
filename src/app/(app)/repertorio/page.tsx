@@ -18,12 +18,12 @@ export default async function RepertoirePage() {
       {songs.length === 0 ? (
         <EmptyState title="Repertório vazio">{can(ctx, "repertoire.manage") ? "Cadastre a primeira música abaixo." : "A liderança ainda não cadastrou músicas."}</EmptyState>
       ) : (
-        <ul className="divide-y divide-linha border-y border-linha">
+        <ul className="divide-y divide-linha rounded-superficie border border-linha bg-superficie px-4">
           {songs.map((s) => (
             <li key={s.id}>
               <Link href={`/repertorio/${s.id}`} className="flex min-h-11 items-baseline justify-between gap-4 py-3 hover:bg-superficie">
-                <span><span className="font-medium">{s.title}</span>{s.artist ? <span className="text-sm text-tinta-2"> — {s.artist}</span> : null}</span>
-                {s.default_key ? <span className="tabular font-mono text-sm text-nanquim">{s.default_key}</span> : null}
+                <span><span className="font-medium">{s.title}</span>{s.artist ? <span className="text-sm text-texto-2"> — {s.artist}</span> : null}</span>
+                {s.default_key ? <span className="tabular font-mono text-sm text-ambar-claro">{s.default_key}</span> : null}
               </Link>
             </li>
           ))}

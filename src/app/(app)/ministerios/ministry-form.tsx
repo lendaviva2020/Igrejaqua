@@ -28,7 +28,7 @@ export function MinistryForm() {
     <form onSubmit={onSubmit} className="flex max-w-md flex-col gap-4" noValidate>
       <FormField label="Nome do ministério" error={errors.name?.message} {...register("name")} />
       <FormField label="Descrição (opcional)" error={errors.description?.message} {...register("description")} />
-      {error ? <p role="alert" className="text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="text-sm text-perigo">{error}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Salvando…" : "Criar ministério"}</Button>
     </form>
   );

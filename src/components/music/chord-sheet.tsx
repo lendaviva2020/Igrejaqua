@@ -11,16 +11,16 @@ export function ChordSheet({ song, tone }: { song: ParsedSong; tone: "paper" | "
       {song.sections.map((section, i) => (
         <section key={i} className="mb-8" aria-label={section.label ?? (KIND_LABEL[section.kind] || undefined)}>
           {section.label || KIND_LABEL[section.kind] ? (
-            <p className={cn("mb-1 text-xs font-sans uppercase tracking-widest", stage ? "text-palco-mudo" : "text-tinta-2")}>{section.label ?? KIND_LABEL[section.kind]}</p>
+            <p className={cn("mb-1 text-xs font-sans uppercase tracking-widest", stage ? "text-palco-mudo" : "text-texto-2")}>{section.label ?? KIND_LABEL[section.kind]}</p>
           ) : null}
           {section.lines.map((line, j) =>
             line.kind === "blank" ? <div key={j} className="h-4" aria-hidden="true" />
-            : line.kind === "comment" ? <p key={j} className={cn("font-sans italic", stage ? "text-palco-mudo" : "text-tinta-2")}>{line.segments.map((s) => s.text).join("")}</p>
+            : line.kind === "comment" ? <p key={j} className={cn("font-sans italic", stage ? "text-palco-mudo" : "text-texto-2")}>{line.segments.map((s) => s.text).join("")}</p>
             : (
               <p key={j} className="flex flex-wrap items-end">
                 {line.segments.map((seg, k) => (
                   <span key={k} className="inline-flex flex-col whitespace-pre">
-                    <span className={cn("h-[1.2em] font-semibold leading-none", stage ? "text-palco-acorde" : "text-cobre")} aria-label={seg.chord ? `acorde ${seg.chord}` : undefined}>{seg.chord ?? " "}</span>
+                    <span className={cn("h-[1.2em] font-semibold leading-none", stage ? "text-palco-acorde" : "text-ambar")} aria-label={seg.chord ? `acorde ${seg.chord}` : undefined}>{seg.chord ?? " "}</span>
                     <span>{seg.text === "" ? " " : seg.text}</span>
                   </span>
                 ))}

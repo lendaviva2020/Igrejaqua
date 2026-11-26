@@ -23,15 +23,15 @@ export function SetlistPanel({ sessionId, items, options, canEdit }: { sessionId
   };
 
   return (
-    <section aria-label="Repertório do culto" className="border-t border-linha py-4">
+    <section aria-label="Repertório do culto" className="mt-2 border-t border-linha py-4">
       <h4 className="mb-2 text-lg">Repertório</h4>
-      {items.length === 0 ? <p className="text-sm text-tinta-2">Nenhuma música definida.</p> : (
+      {items.length === 0 ? <p className="text-sm text-texto-2">Nenhuma música definida.</p> : (
         <ol className="divide-y divide-linha">
           {items.map((i, idx) => (
             <li key={i.id} className="flex flex-wrap items-center justify-between gap-2 py-2">
-              <span><span className="tabular text-tinta-2">{idx + 1}.</span>{" "}
+              <span><span className="tabular text-texto-2">{idx + 1}.</span>{" "}
                 <Link href={`/palco/${i.versionId}${i.targetKey ? `?tom=${encodeURIComponent(i.targetKey)}` : ""}`} className="font-medium underline-offset-2 hover:underline">{i.title}</Link>
-                {i.targetKey ? <span className="text-sm text-tinta-2"> · tom {i.targetKey}</span> : null}
+                {i.targetKey ? <span className="text-sm text-texto-2"> · tom {i.targetKey}</span> : null}
               </span>
               {canEdit ? (
                 <span className="flex gap-2">
@@ -47,7 +47,7 @@ export function SetlistPanel({ sessionId, items, options, canEdit }: { sessionId
       {canEdit ? (
         <form className="mt-3 flex flex-wrap items-end gap-3" onSubmit={(e) => { e.preventDefault(); if (!choice) { setError("Escolha uma música."); return; } run(() => addToSetlistAction({ sessionId, versionId: choice })); setChoice(""); }}>
           <label className="flex flex-col gap-1 text-sm">Adicionar música
-            <select value={choice} onChange={(e) => setChoice(e.target.value)} className="min-h-11 rounded-controle border border-tinta-2 bg-superficie px-3">
+            <select value={choice} onChange={(e) => setChoice(e.target.value)} className="min-h-11 rounded-controle border border-borda bg-fundo px-3">
               <option value="">Selecione…</option>
               {available.map((o) => <option key={o.versionId} value={o.versionId}>{o.title}</option>)}
             </select>
@@ -55,7 +55,7 @@ export function SetlistPanel({ sessionId, items, options, canEdit }: { sessionId
           <Button type="submit" disabled={pending}>Adicionar</Button>
         </form>
       ) : null}
-      {error ? <p role="alert" className="mt-2 text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="mt-2 text-sm text-perigo">{error}</p> : null}
     </section>
   );
 }

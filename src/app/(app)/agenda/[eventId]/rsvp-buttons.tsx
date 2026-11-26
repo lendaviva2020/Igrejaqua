@@ -18,8 +18,8 @@ export function RsvpButtons({ sessionId, current, goingCount }: { sessionId: str
           {RSVP_LABEL[s]}
         </Button>
       ))}
-      {goingCount !== undefined ? <span className="tabular text-sm text-tinta-2">{goingCount} confirmado(s)</span> : null}
-      {error ? <p role="alert" className="w-full text-sm text-vinho">{error}</p> : null}
+      {goingCount !== undefined ? <span className="tabular text-sm text-texto-2">{goingCount} confirmado(s)</span> : null}
+      {error ? <p role="alert" className="w-full text-sm text-perigo">{error}</p> : null}
     </div>
   );
 }

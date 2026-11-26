@@ -1,53 +1,85 @@
 import type { Metadata } from "next";
+import Link from "next/link";
+import { ArrowRight, CalendarDays, CalendarOff, HandHeart, Library, Users, type LucideIcon } from "lucide-react";
+import { DateBadge } from "@/components/shared/date-badge";
 import { EmptyState } from "@/components/shared/empty-state";
-import { PageHeader } from "@/components/shared/page-header";
 import { resolveChurchContext } from "@/lib/auth/context";
-import { listMyUpcomingLineup, listUpcomingEvents } from "@/modules/events/queries";
+import { getChurchTimezone, listMyUpcomingLineup, listUpcomingEvents } from "@/modules/events/queries";
+import { EVENT_KIND_LABEL } from "@/modules/events/schemas";
 
 export const metadata: Metadata = { title: "Painel" };
 
-const dateFmt = new Intl.DateTimeFormat("pt-BR", { weekday: "short", day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: "America/Sao_Paulo" });
 const STATUS_LABEL: Record<string, string> = { published: "Aguardando confirmação", confirmed: "Confirmado" };
+const SHORTCUTS: readonly { href: string; label: string; icon: LucideIcon }[] = [
+  { href: "/agenda", label: "Agenda", icon: CalendarDays },
+  { href: "/repertorio", label: "Repertório", icon: Library },
+  { href: "/oracao", label: "Pedidos de oração", icon: HandHeart },
+  { href: "/ministerios", label: "Ministérios", icon: Users },
+  { href: "/disponibilidade", label: "Minha disponibilidade", icon: CalendarOff },
+];
 
 export default async function DashboardPage() {
   const ctx = await resolveChurchContext();
-  const [events, mine] = await Promise.all([listUpcomingEvents(ctx.churchId), listMyUpcomingLineup(ctx.churchId, ctx.membershipId)]);
+  const [events, mine, tz] = await Promise.all([listUpcomingEvents(ctx.churchId), listMyUpcomingLineup(ctx.churchId, ctx.membershipId), getChurchTimezone(ctx.churchId)]);
+  const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
+  const full = new Intl.DateTimeFormat("pt-BR", { weekday: "long", hour: "2-digit", minute: "2-digit", timeZone: tz });
+  const next = events[0];
   return (
-    <>
-      <PageHeader title="Painel" description={`Próximos compromissos de ${ctx.churchName}.`} />
-      <section aria-labelledby="minha-escala" className="mb-10">
-        <h2 id="minha-escala" className="mb-3 text-2xl">Minha escala</h2>
+    <div className="flex flex-col gap-8">
+      <section aria-label="Boas-vindas" className="brilho-ambar rounded-superficie border border-linha bg-superficie p-6">
+        <h1 className="text-3xl font-bold">Bem-vindo(a)!</h1>
+        <p className="mt-1 text-texto-2">Que bom ter você em {ctx.churchName}.</p>
+      </section>
+
+      <section aria-labelledby="proximo">
+        <h2 id="proximo" className="sr-only">Próximo compromisso</h2>
+        {next === undefined ? (
+          <EmptyState title="Nenhum evento agendado">Os eventos publicados pela liderança aparecerão aqui.</EmptyState>
+        ) : (
+          <Link href={`/agenda/${next.id}`} className="flex items-center gap-4 rounded-superficie border border-linha bg-superficie p-4 hover:bg-superficie-2">
+            <DateBadge iso={next.starts_at} timeZone={tz} />
+            <div className="min-w-0 flex-1">
+              <p className="text-xs uppercase tracking-wide text-ambar-claro">Próximo · {EVENT_KIND_LABEL[next.kind as keyof typeof EVENT_KIND_LABEL] ?? next.kind}</p>
+              <p className="truncate text-lg font-semibold">{next.title}</p>
+              <p className="truncate text-sm text-texto-2 capitalize">{full.format(new Date(next.starts_at))}{next.location ? ` · ${next.location}` : ""}</p>
+            </div>
+            <span className="flex items-center gap-1 text-sm text-ambar-claro">Ver detalhes <ArrowRight aria-hidden="true" size={16} /></span>
+          </Link>
+        )}
+      </section>
+
+      <nav aria-label="Atalhos">
+        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
+          {SHORTCUTS.map(({ href, label, icon: Icon }) => (
+            <li key={href}>
+              <Link href={href} className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-superficie border border-linha bg-superficie p-3 text-center text-sm hover:bg-superficie-2">
+                <Icon aria-hidden="true" size={26} strokeWidth={1.75} className="text-ambar" />
+                {label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </nav>
+
+      <section aria-labelledby="minha-escala">
+        <h2 id="minha-escala" className="mb-3 text-xl">Minha escala</h2>
         {mine.length === 0 ? (
           <EmptyState title="Nenhuma escala publicada para você">Quando um líder publicar uma escala com o seu nome, ela aparece aqui.</EmptyState>
         ) : (
-          <ol className="divide-y divide-linha border-y border-linha">
+          <ol className="flex flex-col gap-3">
             {mine.map((l) => (
-              <li key={l.id} className="grid grid-cols-[7.5rem_1fr] gap-4 py-3">
-                <time className="tabular text-sm text-tinta-2" dateTime={l.event_sessions.starts_at}>{dateFmt.format(new Date(l.event_sessions.starts_at))}</time>
-                <div>
-                  <p className="font-medium">{l.event_sessions.events.title} · {l.event_sessions.name}</p>
-                  <p className="text-sm text-tinta-2">{l.function} — {STATUS_LABEL[l.status] ?? l.status}</p>
+              <li key={l.id} className="flex items-center gap-4 rounded-superficie border border-linha bg-superficie p-4">
+                <DateBadge iso={l.event_sessions.starts_at} timeZone={tz} />
+                <div className="min-w-0">
+                  <p className="truncate font-semibold">{l.event_sessions.events.title} · {l.event_sessions.name}</p>
+                  <p className="text-sm text-texto-2">{l.function} · <time dateTime={l.event_sessions.starts_at}>{time.format(new Date(l.event_sessions.starts_at))}</time></p>
+                  <p className={l.status === "confirmed" ? "text-sm text-sucesso" : "text-sm text-ambar-claro"}>{STATUS_LABEL[l.status] ?? l.status}</p>
                 </div>
               </li>
             ))}
           </ol>
         )}
       </section>
-      <section aria-labelledby="agenda">
-        <h2 id="agenda" className="mb-3 text-2xl">Agenda da igreja</h2>
-        {events.length === 0 ? (
-          <EmptyState title="Nenhum evento agendado">Os eventos publicados pela liderança aparecerão aqui.</EmptyState>
-        ) : (
-          <ol className="divide-y divide-linha border-y border-linha">
-            {events.map((e) => (
-              <li key={e.id} className="grid grid-cols-[7.5rem_1fr] gap-4 py-3">
-                <time className="tabular text-sm text-tinta-2" dateTime={e.starts_at}>{dateFmt.format(new Date(e.starts_at))}</time>
-                <div><p className="font-medium">{e.title}</p>{e.location ? <p className="text-sm text-tinta-2">{e.location}</p> : null}</div>
-              </li>
-            ))}
-          </ol>
-        )}
-      </section>
-    </>
+    </div>
   );
 }

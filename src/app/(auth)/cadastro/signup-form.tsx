@@ -31,8 +31,8 @@ export function SignUpForm() {
     return (
       <div className="flex flex-col gap-4" role="status">
         <h1 className="text-3xl">Confira seu e-mail</h1>
-        <p className="text-tinta-2">Se o endereço puder ser cadastrado, enviamos um link de confirmação. Depois de confirmar, entre para começar.</p>
-        <Link className="text-nanquim underline" href="/login">Ir para o login</Link>
+        <p className="text-texto-2">Se o endereço puder ser cadastrado, enviamos um link de confirmação. Depois de confirmar, entre para começar.</p>
+        <Link className="text-ambar-claro underline" href="/login">Ir para o login</Link>
       </div>
     );
   }
@@ -42,10 +42,10 @@ export function SignUpForm() {
       <FormField label="Nome completo" autoComplete="name" error={errors.fullName?.message} {...register("fullName")} />
       <FormField label="E-mail" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
       <FormField label="Senha" type="password" autoComplete="new-password" hint="Mínimo de 12 caracteres, com letras e números." error={errors.password?.message} {...register("password")} />
-      <p className="text-xs text-tinta-2">Ao criar a conta você concorda com o tratamento dos seus dados para a gestão da sua igreja, conforme a LGPD.</p>
-      {formError ? <p role="alert" className="text-sm text-vinho">{formError}</p> : null}
+      <p className="text-xs text-texto-2">Ao criar a conta você concorda com o tratamento dos seus dados para a gestão da sua igreja, conforme a LGPD.</p>
+      {formError ? <p role="alert" className="text-sm text-perigo">{formError}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Criando…" : "Criar conta"}</Button>
-      <Link className="text-sm text-nanquim underline" href="/login">Já tenho conta</Link>
+      <Link className="text-sm text-ambar-claro underline" href="/login">Já tenho conta</Link>
     </form>
   );
 }

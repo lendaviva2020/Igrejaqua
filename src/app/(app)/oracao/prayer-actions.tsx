@@ -18,14 +18,14 @@ export function PrayerActions({ requestId, iPray, count, canModerate, status }: 
       <Button type="button" variant={iPray ? "primary" : "secondary"} aria-pressed={iPray} disabled={pending} onClick={() => run(() => setPrayingAction({ requestId, praying: !iPray }))}>
         {iPray ? "Estou orando" : "Vou orar"}
       </Button>
-      <span className="tabular text-sm text-tinta-2">{count} {count === 1 ? "pessoa orando" : "pessoas orando"}</span>
+      <span className="tabular text-sm text-texto-2">{count} {count === 1 ? "pessoa orando" : "pessoas orando"}</span>
       {canModerate ? (
         <>
           {status === "open" ? <Button type="button" variant="secondary" disabled={pending} onClick={() => run(() => moderatePrayerAction({ requestId, status: "answered" }))}>Marcar como respondido</Button> : null}
           <Button type="button" variant="secondary" disabled={pending} onClick={() => run(() => moderatePrayerAction({ requestId, status: "archived" }))}>Arquivar</Button>
         </>
       ) : null}
-      {error ? <p role="alert" className="w-full text-sm text-vinho">{error}</p> : null}
+      {error ? <p role="alert" className="w-full text-sm text-perigo">{error}</p> : null}
     </div>
   );
 }

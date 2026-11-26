@@ -14,10 +14,10 @@ export default async function SelectChurchPage() {
       {churches.length > 0 ? (
         <section aria-labelledby="minhas" className="mb-10">
           <h2 id="minhas" className="mb-3 text-2xl">Suas igrejas</h2>
-          <ul className="divide-y divide-linha border-y border-linha">
+          <ul className="divide-y divide-linha rounded-superficie border border-linha bg-superficie px-4">
             {churches.map((c) => (
               <li key={c.churchId} className="flex items-center justify-between gap-4 py-3">
-                <div><p className="font-medium">{c.name}</p><p className="text-sm text-tinta-2">{c.role === "admin" ? "Administração" : c.role === "leader" ? "Liderança" : "Membro"}</p></div>
+                <div><p className="font-medium">{c.name}</p><p className="text-sm text-texto-2">{c.role === "admin" ? "Administração" : c.role === "leader" ? "Liderança" : "Membro"}</p></div>
                 <SwitchChurchButton churchId={c.churchId} label="Entrar" />
               </li>
             ))}

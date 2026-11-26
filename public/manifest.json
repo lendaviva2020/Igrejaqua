@@ -4,7 +4,7 @@
   "lang": "pt-BR",
   "start_url": "/dashboard",
   "display": "standalone",
-  "background_color": "#F4EFE4",
-  "theme_color": "#F4EFE4",
+  "background_color": "#0F1420",
+  "theme_color": "#0F1420",
   "icons": []
 }

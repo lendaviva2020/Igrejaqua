@@ -2,59 +2,31 @@
 
 Status: **PENDING_REVIEW**. O Designer Principal (humano) deve aprovar esta direção antes de qualquer tela (Gate 1).
 
-## 1. Direção estética: "Caderno de Culto"
+## 1. Direção estética: "Noite & Âmbar"
 
-Conceito: o produto se comporta como o **caderno do ministério** — papel quente, tinta, anotações à margem, tipografia de livro litúrgico — e não como um painel SaaS. A pessoa deve sentir ordem e serenidade, não "dashboard".
+Decisão do responsável pelo produto (substitui a direção anterior "Caderno de Culto"): app de igreja **mobile-first escuro**, no padrão do mockup de referência — tema azul-noite, cartões arredondados, grade de atalhos, bloco de data (dia da semana / dia / mês), navegação inferior de 5 itens e botões em pílula — com **âmbar** como cor de marca no lugar do roxo.
 
-O que a torna reconhecível (e não "cara de IA"):
-- **Fundo papel** quente em vez de branco/cinza-azulado; superfícies diferenciadas por **filete e tipografia**, não por sombras e cards empilhados.
-- **Tipografia editorial**: títulos em serifa de livro, texto em grotesca humanista. Números tabulares em agendas.
-- **Estrutura de "folha de ordem de culto"**: listas com linha-guia e marcação lateral (margem) em vez de grade de cards. Cada sessão é uma linha do tempo vertical com horas na margem esquerda.
-- **Acento único** (cobre) usado só para ação primária e estado "agora".
-- Ilustração: nenhuma decorativa. Único elemento gráfico de marca: o **filete duplo** (duas linhas finas) como divisor/identidade.
+Regras: âmbar só para ação primária, "agora/próximo" e ícones de atalho; teal = sucesso/confirmado; coral = erro/perigo; sem emoji como ícone; sem fotos de pessoas fictícias nem números/eventos de exemplo (apenas dados reais); brilho âmbar apenas no cartão de boas-vindas e na abertura (`brilho-ambar`), sem neon.
 
-Proibido (herdado dos prompts): gradientes exagerados, neon, brilho, glassmorphism, emojis como ícone, cards repetitivos sem função, gráficos fictícios, decoração sem função.
-
-## 2. Tokens
-
-### Cor (contrastes calculados — WCAG 2.x)
-| Token | Hex | Uso | Contraste |
+### Paleta (tokens em `src/app/globals.css`)
+| Token | Hex | Uso | Contraste medido |
 |---|---|---|---|
-| `--papel` | `#F4EFE4` | fundo | — |
-| `--superficie` | `#FBF8F1` | áreas elevadas | — |
-| `--tinta` | `#1F1B16` | texto | 14,93:1 sobre papel |
-| `--tinta-2` | `#4A433A` | texto secundário | 8,50:1 |
-| `--nanquim` | `#1E3A5F` | links, navegação ativa | 10,03:1 |
-| `--cobre` | `#A8481F` | ação primária, "agora" | 5,07:1 (texto ≥ 18px/negrito ou ícone+rótulo) |
-| `--oliva` | `#4F6B2E` | confirmado/sucesso | 5,27:1 |
-| `--vinho` | `#8A2C3A` | erro/destrutivo | 7,32:1 |
-| `--linha` | `#D9D0BF` | filetes e bordas | decorativo (não carrega informação) |
+| `fundo` | `#0F1420` | fundo | — |
+| `superficie` / `superficie-2` | `#171F33` / `#1F2A44` | cartões / hover e blocos de data | — |
+| `linha` | `#2B3856` | divisores | decorativo |
+| `borda` | `#5F7098` | bordas de campos e botões secundários | 3,73:1 / 3,33:1 (fundo / superfície) |
+| `texto` | `#F4EFE6` | texto | 16,07:1 / 14,32:1 |
+| `texto-2` | `#A9B3C9` | texto secundário | 8,74:1 / 7,79:1 |
+| `ambar` | `#F5A524` | ação primária, ícones | 9,02:1 sobre fundo |
+| `ambar-claro` | `#FFC96B` | links, foco, estado ativo | 10,79:1 sobre superfície |
+| `sobre-ambar` | `#1A1204` | texto sobre âmbar | 9,09:1 |
+| `sucesso` | `#3CC9A8` | confirmado | 7,90:1 sobre superfície |
+| `perigo` | `#F27885` | erro, remover | 6,09:1 sobre superfície |
 
-Texto sobre `--cobre`/`--nanquim`: `--papel` (5,07:1 / 10,03:1).
-Estado nunca depende só de cor: sempre ícone + texto.
+Tipografia: Instrument Sans (variável, auto-hospedada) em pesos 400–700; IBM Plex Mono para cifras. Raios: controles 12px, cartões 18px, botões em pílula. Foco: contorno âmbar-claro de 2px.
 
-### Stage Mode (tema próprio, escuro, alto contraste)
-| Token | Hex | Contraste sobre `--palco` |
-|---|---|---|
-| `--palco` | `#0C0B09` | fundo |
-| `--palco-txt` | `#F6F1E6` | 17,47:1 (letra) |
-| `--palco-acorde` | `#FFB347` | 11,05:1 (acordes) |
-| `--palco-mudo` | `#B9B09E` | 9,15:1 (metadados) |
-
-Sem brilho/glow. Acordes distinguem-se por **cor + posição + peso**, não só cor.
-
-### Tipografia (auto-hospedada via `next/font`, subset latin + latin-ext)
-- Títulos: **Newsreader** (serifa com eixo óptico).
-- Interface e texto: **Instrument Sans**.
-- Letras/cifras: **IBM Plex Mono** (alinhamento de acordes por coluna).
-Escala (rem): 0,8125 · 0,9375 · 1 · 1,125 · 1,375 · 1,75 · 2,25 · 3. Corpo ≥ 16px. Stage: letra 28–44px ajustável, acorde 0,7× da letra.
-(Escolha de fontes é proposta; o Designer pode substituir sem alterar tokens.)
-
-### Espaço, raio, elevação
-Base 4px; passos 4/8/12/16/24/32/48/72. Raio 2px (controles) / 6px (superfícies). Elevação por filete 1px; sombra só em overlays (menus, diálogos).
-
-### Movimento
-150–220 ms, ease-out; respeita `prefers-reduced-motion`. Um momento de entrada orquestrado por tela (revelação escalonada de linhas da agenda); sem micro-animações gratuitas. View Transitions do React apenas para navegação (skill `vercel-react-view-transitions`).
+### Navegação
+Mobile: barra inferior com Painel, Agenda, Repertório, Oração e Ministérios; demais telas pelos atalhos do painel. Desktop: barra lateral com todas as seções.
 
 ## 3. Experiências por papel
 
@@ -101,7 +73,7 @@ Barra inferior (mobile): Agenda · Disponibilidade · Palco · Comunidade · Mai
 
 ## 7. Responsivo e acessibilidade
 - Mobile-first; breakpoints 480 / 768 / 1100 / 1440. Navegação: barra inferior (<768), trilho lateral (≥768), lateral expandida (≥1100).
-- WCAG 2.2 AA: foco visível de 2px com offset (cor `--nanquim` + halo de papel), alvos ≥ 24px (44px no mobile), `aria-live` para confirmações, navegação por teclado completa, rótulos em todos os campos, `lang="pt-BR"`, reduz movimento.
+- WCAG 2.2 AA: foco visível de 2px com offset (cor `ambar-claro`), alvos ≥ 24px (44px no mobile), `aria-live` para confirmações, navegação por teclado completa, rótulos em todos os campos, `lang="pt-BR"`, reduz movimento.
 - Teste: axe no Playwright em todas as rotas; checklist manual com leitor de tela (NVDA/VoiceOver) no Gate 6.
 
 ## 8. Processo (Gate 1)
