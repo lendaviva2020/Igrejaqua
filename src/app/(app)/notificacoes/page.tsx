@@ -5,14 +5,15 @@ import { PageHeader } from "@/components/shared/page-header";
 import { resolveChurchContext } from "@/lib/auth/context";
 import { safeNextPath } from "@/lib/security/safe-redirect";
 import { getChurchTimezone } from "@/modules/events/queries";
-import { listNotifications } from "@/modules/notifications/queries";
+import { getNotificationPreferences, listNotifications } from "@/modules/notifications/queries";
 import { MarkAllButton, MarkOneButton } from "./read-buttons";
+import { PreferenceToggles } from "./preference-toggles";
 
 export const metadata: Metadata = { title: "Notificações" };
 
 export default async function NotificationsPage() {
   const ctx = await resolveChurchContext();
-  const [items, tz] = await Promise.all([listNotifications(ctx.churchId), getChurchTimezone(ctx.churchId)]);
+  const [items, tz, prefs] = await Promise.all([listNotifications(ctx.churchId), getChurchTimezone(ctx.churchId), getNotificationPreferences(ctx.churchId)]);
   const fmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", hour: "2-digit", minute: "2-digit", timeZone: tz });
   const unread = items.filter((n) => n.read_at === null).length;
   return (
@@ -33,6 +34,11 @@ export default async function NotificationsPage() {
           ))}
         </ul>
       )}
+      <section aria-labelledby="prefs" className="mt-10">
+        <h2 id="prefs" className="mb-1 text-2xl">O que você quer receber</h2>
+        <p className="mb-4 text-sm text-texto-2">Vale para os avisos dentro do sistema. Ainda não enviamos e-mail nem notificação no celular.</p>
+        <PreferenceToggles initial={prefs} />
+      </section>
     </>
   );
 }

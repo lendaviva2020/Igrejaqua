@@ -498,6 +498,22 @@ reset role;
 select private.publish_due_content(null) as pelo_cron \gset
 select tests.eq('cron sem nada vencido', :pelo_cron, 0);
 
+-- ---------- Preferências de notificação (upsert do titular) ----------
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+insert into public.notification_preferences (church_id, user_id, category, channel, enabled) values (:'church_a','00000000-0000-0000-0000-0000000000a4','devocional','in_app', false)
+  on conflict (church_id, user_id, category, channel) do update set enabled = excluded.enabled;
+insert into public.notification_preferences (church_id, user_id, category, channel, enabled) values (:'church_a','00000000-0000-0000-0000-0000000000a4','devocional','in_app', true)
+  on conflict (church_id, user_id, category, channel) do update set enabled = excluded.enabled;
+select tests.eq('upsert não duplica', (select count(*) from public.notification_preferences where category = 'devocional'), 1);
+select tests.denied('preferência em nome de outra pessoa', format($q$insert into public.notification_preferences (church_id,user_id,category,channel,enabled) values (%L,'00000000-0000-0000-0000-0000000000a2','escala','in_app',false)$q$, :'church_a'));
+select tests.denied('preferência em igreja alheia', format($q$insert into public.notification_preferences (church_id,user_id,category,channel,enabled) values (%L,'00000000-0000-0000-0000-0000000000a4','escala','in_app',false)$q$, :'church_b'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.eq('outra pessoa não vê preferências alheias', (select count(*) from public.notification_preferences where user_id = '00000000-0000-0000-0000-0000000000a4'), 0);
+reset role;
+
 -- ---------- Convites: autorização do painel de membros ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;

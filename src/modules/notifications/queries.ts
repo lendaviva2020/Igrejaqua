@@ -1,5 +1,6 @@
 import "server-only";
 import { z } from "zod";
+import { NOTIFICATION_CATEGORIES, type NotificationCategory } from "./preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const Row = z.object({ id: z.string().uuid(), category: z.string(), title: z.string(), body: z.string().nullable(), link_path: z.string().nullable(), read_at: z.string().nullable(), created_at: z.string() });
@@ -17,4 +18,17 @@ export async function countUnreadNotifications(churchId: string): Promise<number
   const { count, error } = await supabase.from("notifications").select("id", { count: "exact", head: true }).eq("church_id", churchId).is("read_at", null);
   if (error) throw new Error(`Falha ao contar notificações: ${error.message}`);
   return count ?? 0;
+}
+
+/** Sem registro = habilitado (padrão do banco em private.notify). */
+export async function getNotificationPreferences(churchId: string): Promise<Readonly<Record<NotificationCategory, boolean>>> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("notification_preferences").select("category, enabled").eq("church_id", churchId).eq("channel", "in_app");
+  if (error) throw new Error(`Falha ao carregar preferências: ${error.message}`);
+  const result: Record<NotificationCategory, boolean> = { escala: true, comunicado: true, devocional: true };
+  for (const row of data as { category: string; enabled: boolean }[]) {
+    const cat = NOTIFICATION_CATEGORIES.find((c) => c === row.category);
+    if (cat !== undefined) result[cat] = row.enabled;
+  }
+  return result;
 }

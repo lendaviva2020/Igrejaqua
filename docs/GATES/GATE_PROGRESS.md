@@ -73,3 +73,7 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - Publicação no banco (`private.publish_due_content`, migration `…001300`): `pg_cron` a cada minuto quando a extensão estiver habilitada (Supabase: Database → Extensions → pg_cron) e, como complemento, `public.publish_due_content(church)` ao abrir /comunicados. As notificações saem pelas triggers existentes. Sem service role e sem endpoint HTTP.
 - Pendência de ambiente: habilitar `pg_cron` no projeto real e conferir `select * from cron.job`.
 - Evidência: tsc, eslint, build, vitest (126), Playwright (22), SQL (vencido publica, futuro não, visibilidade, isolamento, notificação).
+
+## Preferências de notificação (Gate 4)
+- `/notificacoes`: chaves por categoria (escala, comunicado, devocional) para o canal "dentro do sistema". Sem registro = ligado; `private.notify` já respeita a preferência. Push e e-mail seguem sem envio (sem provedor), e a tela diz isso.
+- Evidência: tsc, eslint, build, vitest (128), Playwright (22), SQL (upsert sem duplicar, isolamento por titular e por igreja).
