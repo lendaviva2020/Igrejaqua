@@ -45,6 +45,10 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await expect(page).toHaveURL(/\/login\?next=%2Fmfa$/);
     await page.goto("/biblia/joao/3");
     await expect(page).toHaveURL(/\/login\?next=%2Fbiblia%2Fjoao%2F3$/);
+    for (const rota of ["familias", "visitantes", "celulas", "financeiro"]) {
+      await page.goto(`/${rota}`);
+      await expect(page).toHaveURL(new RegExp(`/login\\?next=%2F${rota}$`));
+    }
     await page.goto("/mfa/configurar");
     await expect(page).toHaveURL(/\/login\?next=%2Fmfa%2Fconfigurar$/);
   });

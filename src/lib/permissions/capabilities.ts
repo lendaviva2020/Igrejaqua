@@ -57,6 +57,12 @@ export const CAPABILITIES = {
   "audit.view": { kind: "admin" },
   "data.export": { kind: "admin" },
   "agenda.view": { kind: "member" },
+  "family.view": { kind: "anyMinistry", anyOf: ["manage_members"] },
+  "family.manage": { kind: "admin" },
+  "visitor.manage": { kind: "anyMinistry", anyOf: ["manage_members"] },
+  "visitor.delete": { kind: "admin" },
+  "cell.manage": { kind: "admin" },
+  "finance.manage": { kind: "admin" },
 } as const satisfies Record<string, Rule>;
 
 export type Action = keyof typeof CAPABILITIES;

@@ -111,3 +111,11 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 - Busca server-side com cache de 30 dias, timeout de 8 s, allowlist de tradução e validação Zod (capítulo/livro devem bater). Telas `/biblia` (livros + "Ir para" com parser de referências) e `/biblia/[livro]/[capitulo]` (destaque de versículos, navegação, atribuição).
 - MFA: admin sem autenticador → `/mfa/configurar` (obrigatório); com autenticador em aal1 → `/mfa`.
 - Vercel: o conector não lista o projeto IGREJAQUA nesta conta (só `eletricai`); configuração de variáveis feita pelo responsável.
+
+## Onda 2 — famílias, visitantes, células, financeiro e leitura do dia — 2026-11-26
+
+- Migration `20261126001800` + `supabase/tests/110_wave2.sql` (RLS, menores, consentimento de visitantes, imutabilidade do livro-caixa, auditoria sem valores).
+- Rotas protegidas: `/familias`, `/visitantes`, `/celulas`, `/celulas/[cellId]`, `/financeiro` (E2E de guarda → login).
+- Capacidades novas em `capabilities.ts`: `family.view`, `family.manage`, `visitor.manage`, `visitor.delete`, `cell.manage`, `finance.manage`; testes em `tests/unit/wave2-schemas.test.ts` e `finance-money.test.ts`.
+- Bíblia integrada a comunicados/devocionais (`ScriptureLink`) e "Leitura do dia" no painel (referência do último devocional publicado; nenhum versículo inventado).
+- Pendências: revisão LGPD do livro-caixa; retenção de visitantes; nada foi exercitado contra serviços reais (Supabase/Resend/push/getBible) no sandbox.

@@ -4,6 +4,8 @@ import { ArrowRight, CalendarDays, CalendarOff, HandHeart, Library, Users, type 
 import { DateBadge } from "@/components/shared/date-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { resolveChurchContext } from "@/lib/auth/context";
+import { ScriptureLink } from "@/components/bible/scripture-link";
+import { getLatestDevotionalReading } from "@/modules/content/queries";
 import { getChurchTimezone, listMyUpcomingLineup, listUpcomingEvents } from "@/modules/events/queries";
 import { EVENT_KIND_LABEL } from "@/modules/events/schemas";
 
@@ -20,7 +22,7 @@ const SHORTCUTS: readonly { href: string; label: string; icon: LucideIcon }[] = 
 
 export default async function DashboardPage() {
   const ctx = await resolveChurchContext();
-  const [events, mine, tz] = await Promise.all([listUpcomingEvents(ctx.churchId), listMyUpcomingLineup(ctx.churchId, ctx.membershipId), getChurchTimezone(ctx.churchId)]);
+  const [events, mine, tz, reading] = await Promise.all([listUpcomingEvents(ctx.churchId), listMyUpcomingLineup(ctx.churchId, ctx.membershipId), getChurchTimezone(ctx.churchId), getLatestDevotionalReading(ctx.churchId)]);
   const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
   const full = new Intl.DateTimeFormat("pt-BR", { weekday: "long", hour: "2-digit", minute: "2-digit", timeZone: tz });
   const next = events[0];
@@ -30,6 +32,14 @@ export default async function DashboardPage() {
         <h1 className="text-3xl font-bold">Bem-vindo(a)!</h1>
         <p className="mt-1 text-texto-2">Que bom ter você em {ctx.churchName}.</p>
       </section>
+
+      {reading === null ? null : (
+        <section aria-labelledby="leitura" className="rounded-superficie border border-linha bg-superficie p-4">
+          <h2 id="leitura" className="text-sm uppercase tracking-wide text-ambar-claro">Leitura do dia</h2>
+          <p className="mt-1 text-lg">{reading.title}</p>
+          <ScriptureLink reference={reading.scripture_ref} />
+        </section>
+      )}
 
       <section aria-labelledby="proximo">
         <h2 id="proximo" className="sr-only">Próximo compromisso</h2>

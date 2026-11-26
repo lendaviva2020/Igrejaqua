@@ -10,6 +10,8 @@ import { listMinistries } from "@/modules/ministries/queries";
 import { ContentActions } from "./content-actions";
 import { ContentForm, type AudienceOption } from "./content-form";
 
+import { ScriptureLink } from "@/components/bible/scripture-link";
+
 export const metadata: Metadata = { title: "Comunicados" };
 
 export default async function ContentPage() {
@@ -36,7 +38,7 @@ export default async function ContentPage() {
                 {c.published_at ? <> · <time dateTime={c.published_at}>{fmt.format(new Date(c.published_at))}</time></> : null}
               </p>
               <h2 className="mt-1 text-lg">{c.title}</h2>
-              {c.scripture_ref ? <p className="text-sm text-texto-2">{c.scripture_ref}</p> : null}
+              {c.scripture_ref ? <ScriptureLink reference={c.scripture_ref} /> : null}
               {/* Texto puro (sem HTML/Markdown interpretado): elimina XSS armazenado. */}
               <p className="mt-2 whitespace-pre-wrap text-texto-2">{c.body_md}</p>
               {audiences.length > 0 && (c.audience === "church" ? can(ctx, "content.publish.church") : c.ministry_id !== null && can(ctx, "content.publish.ministry", c.ministry_id)) ? <ContentActions id={c.id} status={c.status} /> : null}

@@ -22,8 +22,14 @@ export default async function AppLayout({ children }: { children: ReactNode }) {
   const ctx = await resolveChurchContext();
   const unread = await countUnreadNotifications(ctx.churchId);
   const base = BASE_NAV.map((i) => (i.href === "/notificacoes" ? { ...i, badge: unread } : i));
-  const admin: readonly NavItem[] = can(ctx, "member.invite") ? [{ href: "/membros", label: "Membros", icon: "membros" }] : [];
-  const nav: readonly NavItem[] = [...base, ...admin, { href: "/configuracoes", label: "Configurações", icon: "configuracoes" }];
+  const extra: readonly NavItem[] = [
+    { href: "/celulas", label: "Células", icon: "celulas" },
+    ...(can(ctx, "member.invite") ? [{ href: "/membros", label: "Membros", icon: "membros" } as const] : []),
+    { href: "/familias", label: "Famílias", icon: "familias" },
+    ...(can(ctx, "visitor.manage") ? [{ href: "/visitantes", label: "Visitantes", icon: "visitantes" } as const] : []),
+    ...(can(ctx, "finance.manage") ? [{ href: "/financeiro", label: "Financeiro", icon: "financeiro" } as const] : []),
+  ];
+  const nav: readonly NavItem[] = [...base, ...extra, { href: "/configuracoes", label: "Configurações", icon: "configuracoes" }];
   return (
     <>
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-fundo focus:p-3">Pular para o conteúdo</a>

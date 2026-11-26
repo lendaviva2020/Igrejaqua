@@ -24,3 +24,26 @@ export async function listContent(churchId: string): Promise<readonly ContentIte
   if (error) throw new Error(`Falha ao listar comunicados: ${error.message}`);
   return z.array(Row).parse(data);
 }
+
+const ReadingRow = z.object({ title: z.string(), scripture_ref: z.string() });
+export type DailyReading = z.infer<typeof ReadingRow>;
+
+/** Referência do devocional publicado mais recente (a RLS já filtra pelo público de quem lê); nenhum texto é inventado. */
+export async function getLatestDevotionalReading(churchId: string): Promise<DailyReading | null> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase
+    .from("announcements_and_devotionals")
+    .select("title, scripture_ref")
+    .eq("church_id", churchId)
+    .eq("kind", "devotional")
+    .eq("status", "published")
+    .is("deleted_at", null)
+    .not("scripture_ref", "is", null)
+    .order("published_at", { ascending: false })
+    .limit(1)
+    .maybeSingle();
+  if (error) throw new Error(`Falha ao buscar a leitura do dia: ${error.message}`);
+  if (data === null) return null;
+  const parsed = ReadingRow.safeParse(data);
+  return parsed.success ? parsed.data : null;
+}

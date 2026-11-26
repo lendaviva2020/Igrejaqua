@@ -114,9 +114,14 @@ Todas usam `(select auth.uid())` para permitir cache de initplan e são revogada
 
 `set_updated_at` (todas); `audit_row_change` (tabelas sensíveis); `profiles_on_signup`; `memberships_guard` (impede auto-promoção, remoção do último admin e mudança de `user_id`); `lineup_no_overlap`; `setlist_same_church_guard` (defesa em profundidade além da FK composta); `content_publish_guard` (só publica com permissão e muda `published_at`).
 
-## 9. Reservado para a Onda 2 (não criado)
+## 9. Onda 2 (migration `20261126001800`)
 
-`families`, `family_relations`, `visitors`, `visit_followups`, `cell_groups`, `cell_meetings`, `finance_entries`. Todas seguirão as mesmas convenções (FK composta, RLS, auditoria).
+Tabelas: `families`, `family_members`, `visitors`, `visit_followups`, `cell_groups`, `cell_members`, `cell_meetings`, `cell_meeting_attendance`, `finance_categories`, `finance_entries`. Mesmas convenções (`church_id`, FK composta, RLS ENABLE, auditoria só com nomes de colunas). Testes: `supabase/tests/110_wave2.sql`.
+
+- **Famílias:** menor de idade exige responsável na família; vínculo a membro OU nome (nunca ambos). Visível/gerenciado por quem tem `manage_members` em algum ministério e pela administração.
+- **Visitantes (LGPD):** telefone/e-mail só são guardados com `contact_consent_at`; exclusão (direito ao apagamento) só pela administração, com cascata nos acompanhamentos. A política de retenção ainda não cobre visitantes (pendente).
+- **Células:** gestão pela administração; presença por reunião.
+- **Financeiro (`finance_entries`):** livro-caixa só da administração, sem atribuição por pessoa, append-only (somente anulação, sem permissão de DELETE). Requer revisão LGPD antes de produção.
 
 ## 10. Classificação
 
@@ -125,4 +130,4 @@ Todas usam `(select auth.uid())` para permitir cache de initplan e são revogada
 | Modelo lógico e convenções | PENDING_REVIEW |
 | DDL / migrations | NOT_IMPLEMENTED (aguarda aprovação — Gate 2) |
 | Separação autor/pedido de oração | PENDING_REVIEW |
-| `ledger` financeiro | BLOCKED até decisão de escopo e revisão LGPD |
+| Livro-caixa (`finance_entries`) | IMPLEMENTED; revisão LGPD recomendada antes de produção |

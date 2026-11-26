@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Bell, CalendarDays, CalendarOff, HandHeart, HeartHandshake, LayoutDashboard, BookOpen, Library, Megaphone, Settings, UserCog, Users, type LucideIcon } from "lucide-react";
+import { Bell, CalendarDays, CalendarOff, HandHeart, HeartHandshake, LayoutDashboard, BookOpen, Library, Megaphone, Settings, UserCog, UserPlus, Users, Landmark, House, CircleDot, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export interface NavItem { readonly href: string; readonly label: string; readonly bottom?: boolean; readonly badge?: number; readonly icon: "contribuir" | "comunicados" | "notificacoes" | "painel" | "agenda" | "ministerios" | "repertorio" | "biblia" | "disponibilidade" | "oracao" | "membros" | "configuracoes" }
-const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, biblia: BookOpen, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart, comunicados: Megaphone, contribuir: HeartHandshake, notificacoes: Bell, membros: UserCog, configuracoes: Settings };
+export interface NavItem { readonly href: string; readonly label: string; readonly bottom?: boolean; readonly badge?: number; readonly icon: "contribuir" | "comunicados" | "notificacoes" | "painel" | "agenda" | "ministerios" | "repertorio" | "biblia" | "celulas" | "familias" | "visitantes" | "financeiro" | "disponibilidade" | "oracao" | "membros" | "configuracoes" }
+const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, biblia: BookOpen, celulas: CircleDot, familias: House, visitantes: UserPlus, financeiro: Landmark, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart, comunicados: Megaphone, contribuir: HeartHandshake, notificacoes: Bell, membros: UserCog, configuracoes: Settings };
 
 export function NavLinks({ items, orientation }: { items: readonly NavItem[]; orientation: "side" | "bottom" }) {
   const pathname = usePathname();
