@@ -399,6 +399,43 @@ delete from public.ministry_memberships where id = :'mm_a4';
 reset role;
 select tests.eq('admin removeu integrante', (select count(*) from public.ministry_memberships where id = :'mm_a4'), 0);
 
+-- ---------- LGPD: pedidos de titulares e perfil ----------
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+insert into public.data_subject_requests (church_id, user_id, kind, details) values (:'church_a','00000000-0000-0000-0000-0000000000a4','access','quero meus dados');
+select tests.denied('pedido em nome de outra pessoa', format($q$insert into public.data_subject_requests (church_id,user_id,kind) values (%L,'00000000-0000-0000-0000-0000000000a2','erasure')$q$, :'church_a'));
+select tests.denied('pedido em outra igreja', format($q$insert into public.data_subject_requests (church_id,user_id,kind) values (%L,'00000000-0000-0000-0000-0000000000a4','access')$q$, :'church_b'));
+update public.data_subject_requests set status = 'done';
+select tests.denied('titular altera o prazo', $q$update public.data_subject_requests set due_at = now() + interval '5 years'$q$);
+update public.profiles set full_name = 'Nome Novo A4', phone = '11999990000' where id = '00000000-0000-0000-0000-0000000000a4';
+select tests.denied('perfil: altera id', $q$update public.profiles set id = '00000000-0000-0000-0000-0000000000a9' where id = '00000000-0000-0000-0000-0000000000a4'$q$);
+reset role;
+select tests.eq('membro não conclui o próprio pedido (RLS filtra)', (select count(*) from public.data_subject_requests where user_id = '00000000-0000-0000-0000-0000000000a4' and status = 'open'), 1);
+select tests.eq('perfil próprio atualizado', (select count(*) from public.profiles where id = '00000000-0000-0000-0000-0000000000a4' and full_name = 'Nome Novo A4'), 1);
+
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.eq('outro membro não vê o pedido', (select count(*) from public.data_subject_requests), 0);
+update public.profiles set full_name = 'Invasor' where id = '00000000-0000-0000-0000-0000000000a4';
+reset role;
+select tests.eq('não altera perfil alheio', (select count(*) from public.profiles where full_name = 'Invasor'), 0);
+
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+select tests.eq('admin vê pedidos da igreja', (select count(*) from public.data_subject_requests where church_id = :'church_a'), 1);
+update public.data_subject_requests set status = 'in_progress', handled_by = '00000000-0000-0000-0000-0000000000a1';
+select tests.denied('admin altera o conteúdo do pedido', $q$update public.data_subject_requests set details = 'reescrito'$q$);
+update public.churches set name = 'Igreja A Renomeada', timezone = 'America/Manaus' where id = :'church_a';
+reset role;
+select tests.eq('admin concluiu atendimento', (select count(*) from public.data_subject_requests where status = 'in_progress'), 1);
+select tests.eq('admin renomeou a igreja', (select count(*) from public.churches where id = :'church_a' and name = 'Igreja A Renomeada'), 1);
+
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+update public.churches set name = 'Hack' where id = :'church_a';
+reset role;
+select tests.eq('membro não renomeia a igreja', (select count(*) from public.churches where name = 'Hack'), 0);
+
 -- ---------- Convites: autorização do painel de membros ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;

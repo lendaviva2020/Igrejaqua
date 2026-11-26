@@ -57,3 +57,8 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - `/ministerios/[id]`: adicionar/editar/remover integrantes (função, instrumentos, naipe, ativo) e conceder/revogar permissões (anti-escalada no banco).
 - Textos legais são versão inicial para a igreja piloto; validação jurídica pendente.
 - Evidência: tsc, eslint, build, vitest (116), Playwright (22), SQL (integrantes, convites).
+
+## Configurações e LGPD do titular (Gate 4)
+- `/configuracoes`: perfil próprio (nome, como prefere ser chamado, telefone), troca de senha (encerra outras sessões), "Baixar meus dados" (`/api/me/export`, JSON lido com a sessão do titular via RLS; pedidos de oração ficam de fora para preservar o anonimato), pedido formal ao titular (acesso, correção, eliminação, portabilidade, revogação; prazo de 15 dias no banco).
+- Administração: dados da igreja (nome, razão social, CNPJ, fuso) e caixa de pedidos de titulares (iniciar, concluir, recusar). A execução da eliminação/anonimização em si continua manual, conforme DATABASE.md, até haver procedimento validado juridicamente.
+- Evidência: tsc, eslint, build, vitest (119), Playwright (22), SQL (pedidos, perfil, renomear igreja).
