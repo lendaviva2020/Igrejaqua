@@ -114,7 +114,7 @@ Alternativa registrada: slug na URL (`/{igreja}/dashboard`). Melhor para múltip
 
 ## 6. PWA
 
-Manifest + service worker (Serwist, a confirmar compatibilidade com a versão final do Next no Gate 1). Cache **apenas** de: shell estático, fontes, e payload de Stage Mode de eventos publicados que o usuário abriu. Nunca cachear respostas autenticadas genéricas; logout limpa caches. Ver `SECURITY.md` §9.
+Manifest + service worker próprio em `public/sw.js` (sem dependência; Serwist descartado para evitar acoplamento com a versão do Next). Cache **apenas** de: shell estático, fontes, e payload de Stage Mode de eventos publicados que o usuário abriu. Nunca cachear respostas autenticadas genéricas; logout limpa caches. Ver `SECURITY.md` §9.
 
 ## 7. Dependências (verificadas no registro npm em 2026-11-25)
 

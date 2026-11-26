@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Bell, LogOut } from "lucide-react";
 import { signOutAction } from "@/modules/identity/actions";
 import { Logo } from "@/components/shared/logo";
+import { SignOutForm } from "./sign-out-form";
 import { NavLinks, type NavItem } from "./nav-links";
 
 const ROLE_LABEL = { admin: "Administração", leader: "Liderança", member: "Membro" } as const;
@@ -19,11 +20,11 @@ export function AppShell({ churchName, role, items, unread, children }: { church
           </div>
         </div>
         <nav aria-label="Seções"><NavLinks items={items} orientation="side" /></nav>
-        <form action={signOutAction} className="mt-auto">
+        <SignOutForm action={signOutAction} className="mt-auto">
           <button type="submit" className="flex min-h-11 items-center gap-2 rounded-controle px-3 text-sm text-texto-2 hover:text-texto">
             <LogOut aria-hidden="true" size={16} strokeWidth={1.75} />Sair
           </button>
-        </form>
+        </SignOutForm>
       </aside>
       <div className="pb-24 md:pb-0">
         <header className="flex items-center justify-between gap-3 px-4 py-3 md:hidden">
@@ -36,7 +37,7 @@ export function AppShell({ churchName, role, items, unread, children }: { church
               <Bell aria-hidden="true" size={22} strokeWidth={1.75} />
               {unread > 0 ? <span aria-hidden="true" className="absolute right-1.5 top-1.5 size-2.5 rounded-full bg-ambar" /> : null}
             </Link>
-            <form action={signOutAction}><button type="submit" className="min-h-11 px-2 text-sm text-ambar-claro">Sair</button></form>
+            <SignOutForm action={signOutAction}><button type="submit" className="min-h-11 px-2 text-sm text-ambar-claro">Sair</button></SignOutForm>
           </div>
         </header>
         <main id="conteudo" className="mx-auto w-full max-w-4xl px-4 py-6 md:px-8 md:py-10">{children}</main>

@@ -81,3 +81,10 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 ### Acessibilidade automatizada (axe)
 - `tests/e2e/a11y.spec.ts`: axe (WCAG 2.0/2.1 A e AA) em `/`, `/login`, `/cadastro`, `/recuperar-senha`, `/privacidade` e `/termos`, em desktop e mobile. Resultado: 12/12 sem violações.
 - Limite: axe cobre só parte dos critérios; faltam telas autenticadas (exigem Supabase real) e revisão manual com leitor de tela.
+
+### PWA e offline
+- `public/manifest.json` com ícones 192/512 e maskable (`public/icons`), `public/sw.js` (registrado só em produção por `ServiceWorkerRegister`).
+- Cache restrito (SECURITY §9): `/_next/static`, `/icons`, página `/offline` e páginas `/palco/<uuid>` já abertas (network-first, máx. 30, nunca resposta redirecionada/erro). Demais rotas autenticadas não são cacheadas.
+- Logout (`SignOutForm`) envia `CLEAR_CACHES` ao service worker; o `sw.js` é servido com `no-cache`.
+- Testes E2E (`tests/e2e/pwa.spec.ts`): manifest/ícones, cabeçalho do sw, fallback offline, rotas protegidas fora do cache, limpeza de caches. Total E2E: 42 passando.
+- Limite: o cache do Modo Palco offline não foi exercitado com sessão real (depende do Supabase); push notifications não implementado.
