@@ -1,12 +1,13 @@
 import { z } from "zod";
 
 /** Categorias emitidas hoje pelas triggers do banco (private.notify). Entrega: sistema, e-mail e celular (fila no banco). */
-export const NOTIFICATION_CATEGORIES = ["escala", "comunicado", "devocional"] as const;
+export const NOTIFICATION_CATEGORIES = ["escala", "comunicado", "devocional", "contribuicao"] as const;
 export type NotificationCategory = (typeof NOTIFICATION_CATEGORIES)[number];
 export const NOTIFICATION_CATEGORY_LABEL: Record<NotificationCategory, { title: string; hint: string }> = {
   escala: { title: "Escalas", hint: "Quando você for escalado(a) para uma função." },
   comunicado: { title: "Comunicados", hint: "Avisos da igreja e dos seus ministérios." },
   devocional: { title: "Devocionais", hint: "Devocionais publicados para você." },
+  contribuicao: { title: "Contribuições", hint: "Só para a administração: aviso quando um Pix é confirmado (sem identificar quem contribuiu)." },
 };
 
 export const NOTIFICATION_CHANNELS = ["in_app", "email", "push"] as const;

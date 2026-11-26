@@ -26,9 +26,9 @@ export async function getChannelPreferences(churchId: string): Promise<ChannelPr
   const { data, error } = await supabase.from("notification_preferences").select("category, channel, enabled").eq("church_id", churchId);
   if (error) throw new Error(`Falha ao carregar preferências: ${error.message}`);
   const result: Record<NotificationChannel, Record<NotificationCategory, boolean>> = {
-    in_app: { escala: CHANNEL_DEFAULT.in_app, comunicado: CHANNEL_DEFAULT.in_app, devocional: CHANNEL_DEFAULT.in_app },
-    email: { escala: CHANNEL_DEFAULT.email, comunicado: CHANNEL_DEFAULT.email, devocional: CHANNEL_DEFAULT.email },
-    push: { escala: CHANNEL_DEFAULT.push, comunicado: CHANNEL_DEFAULT.push, devocional: CHANNEL_DEFAULT.push },
+    in_app: { escala: CHANNEL_DEFAULT.in_app, comunicado: CHANNEL_DEFAULT.in_app, devocional: CHANNEL_DEFAULT.in_app, contribuicao: CHANNEL_DEFAULT.in_app },
+    email: { escala: CHANNEL_DEFAULT.email, comunicado: CHANNEL_DEFAULT.email, devocional: CHANNEL_DEFAULT.email, contribuicao: CHANNEL_DEFAULT.email },
+    push: { escala: CHANNEL_DEFAULT.push, comunicado: CHANNEL_DEFAULT.push, devocional: CHANNEL_DEFAULT.push, contribuicao: CHANNEL_DEFAULT.push },
   };
   for (const row of data as { category: string; channel: string; enabled: boolean }[]) {
     const cat = NOTIFICATION_CATEGORIES.find((c) => c === row.category);

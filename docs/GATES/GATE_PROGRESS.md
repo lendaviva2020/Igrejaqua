@@ -27,7 +27,7 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 | 1 Design System | IMPLEMENTADO | tokens "Noite & Âmbar", componentes base, Stage Mode, axe automatizado (E2E) | aprovação do designer humano |
 | 2 Banco/Auth/RLS | IMPLEMENTADO localmente | 17 migrations, RLS em todas as tabelas, FKs compostas, triggers, auditoria append-only, suíte SQL | aplicar em Supabase real; fluxo de Auth real; tipos gerados |
 | 3 Navegação | IMPLEMENTADO | proxy (sessão, CSP nonce), shell por papel, seleção de igreja, convites | — |
-| 4 Módulos | IMPLEMENTADO | ministérios, repertório, agenda/escalas, membros/convites, presença, comunicados, oração, notificações, configurações/LGPD, publicação agendada, contribuições Pix | revisão LGPD do livro-caixa; retenção de visitantes |
+| 4 Módulos | IMPLEMENTADO | ministérios, repertório, agenda/escalas, membros/convites, presença, comunicados, oração, notificações, configurações/LGPD, publicação agendada, contribuições Pix | revisão LGPD do livro-caixa |
 | 5 Integrações | IMPLEMENTADO (código e testes locais) | motor de IA consultiva (escala), PWA/offline, retenção de dados (`private.run_retention`), fila de e-mail (Resend) e Web Push (VAPID) com worker `/api/cron/deliver`, MFA TOTP para admin | chamadas reais (DeepSeek, Resend, push); parecer jurídico (LGPD art. 33) antes de ligar a IA; demais capacidades de IA (repertório, tom vocal, ensaio, transições); agendar o worker e `pg_cron` |
 | 6 Testes/Segurança | PARCIAL | testes acima, varredura de segredos no bundle, headers, axe | pentest, carga, restauração de backup |
 | 7 Homologação | NÃO INICIADO | — | tudo |
@@ -44,7 +44,7 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 ## Atualização — Pix via Mercado Pago (Gate 4/5)
 - Implementado: `pix_charges` (RLS: pagador + admin; cliente só cria intenção), cliente Mercado Pago (`POST /v1/payments`, `X-Idempotency-Key`, expiração -03:00), webhook `/api/webhooks/mercadopago` (HMAC-SHA256 do manifesto `id;request-id;ts`, comparação em tempo constante; status relido na API do provedor; confere `external_reference` e valor), páginas `/contribuir` e `/contribuir/[chargeId]` (QR em SVG, copia e cola, verificação automática).
 - **Não verificado contra o provedor real**: sem chaves, só testado com `fetch` simulado e testes SQL. Pendente: configurar `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET`, cadastrar a URL do webhook no painel e testar em sandbox antes de produção.
-- Pendente: revisão LGPD do dado financeiro por pessoa; conciliação/relatório exportável; estorno pelo app; notificação ao administrador.
+- Pendente: revisão LGPD do dado financeiro por pessoa; estorno pelo app (depende do provedor real).
 
 ## Membros e convites (Gate 4)
 - `/membros` (somente admin): gerar convite (token de 256 bits; só o hash sha256 é gravado; link exibido uma única vez, válido 7 dias), revogar, alterar papel e suspender/reativar. Regras de proteção (não alterar o próprio papel, último admin) permanecem no banco (`memberships_guard`).
@@ -118,6 +118,8 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 - Rotas protegidas: `/familias`, `/visitantes`, `/celulas`, `/celulas/[cellId]`, `/financeiro` (E2E de guarda → login).
 - Capacidades novas em `capabilities.ts`: `family.view`, `family.manage`, `visitor.manage`, `visitor.delete`, `cell.manage`, `finance.manage`; testes em `tests/unit/wave2-schemas.test.ts` e `finance-money.test.ts`.
 - Bíblia integrada a comunicados/devocionais (`ScriptureLink`) e "Leitura do dia" no painel (referência do último devocional publicado; nenhum versículo inventado).
-- Pendências: revisão LGPD do livro-caixa; retenção de visitantes; nada foi exercitado contra serviços reais (Supabase/Resend/push/getBible) no sandbox.
+- Pendências: revisão LGPD do livro-caixa; nada foi exercitado contra serviços reais (Supabase/Resend/push/getBible) no sandbox.
 
 - Exportação CSV mensal do livro-caixa (`/financeiro/exportar?m=AAAA-MM`, só administração, anti-injeção de fórmula; `tests/unit/finance-csv.test.ts`).
+- Retenção de contato de visitantes (migration `20261126001900`, 365 dias por padrão) com teste em `110_wave2.sql`; 19 migrations.
+- Aviso à administração quando um Pix é confirmado (migration `20261126002000`, categoria `contribuicao`; não identifica o contribuinte; dedupe por cobrança). 20 migrations.

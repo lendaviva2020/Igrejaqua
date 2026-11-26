@@ -119,7 +119,7 @@ Todas usam `(select auth.uid())` para permitir cache de initplan e são revogada
 Tabelas: `families`, `family_members`, `visitors`, `visit_followups`, `cell_groups`, `cell_members`, `cell_meetings`, `cell_meeting_attendance`, `finance_categories`, `finance_entries`. Mesmas convenções (`church_id`, FK composta, RLS ENABLE, auditoria só com nomes de colunas). Testes: `supabase/tests/110_wave2.sql`.
 
 - **Famílias:** menor de idade exige responsável na família; vínculo a membro OU nome (nunca ambos). Visível/gerenciado por quem tem `manage_members` em algum ministério e pela administração.
-- **Visitantes (LGPD):** telefone/e-mail só são guardados com `contact_consent_at`; exclusão (direito ao apagamento) só pela administração, com cascata nos acompanhamentos. A política de retenção ainda não cobre visitantes (pendente).
+- **Visitantes (LGPD):** telefone/e-mail só são guardados com `contact_consent_at`; exclusão (direito ao apagamento) só pela administração, com cascata nos acompanhamentos. Retenção: `private.run_retention()` apaga telefone/e-mail/consentimento de visitantes sem atividade há 365 dias (ajustável em `retention_policy.visitor_contact_days`); nome e acompanhamentos permanecem até o apagamento pela administração.
 - **Células:** gestão pela administração; presença por reunião.
 - **Financeiro (`finance_entries`):** livro-caixa só da administração, sem atribuição por pessoa, append-only (somente anulação, sem permissão de DELETE). Requer revisão LGPD antes de produção.
 

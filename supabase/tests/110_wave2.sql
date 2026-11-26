@@ -187,3 +187,22 @@ select tests.eq('resumo de outra igreja vem vazio', (select count(*) from public
 reset role;
 select tests.eq('auditoria registrou o caixa sem valores', (select count(*) from public.audit_logs where entity_table = 'finance_entries' and diff::text !~ '[0-9]{5}'), (select count(*) from public.audit_logs where entity_table = 'finance_entries'));
 select 'OK: testes da Onda 2 concluídos' as resultado;
+
+-- ===== Retenção de contato de visitantes =====
+insert into public.visitors (church_id, full_name, phone, contact_consent_at, created_at, updated_at) values
+  (:'church_w','Visitante Antigo','11999990001', now() - interval '500 days', now() - interval '500 days', now() - interval '500 days'),
+  (:'church_w','Visitante Recente','11999990002', now() - interval '10 days', now() - interval '10 days', now() - interval '10 days');
+select private.run_retention();
+select tests.eq('retenção: contato de visitante antigo apagado, nome preservado', (select count(*) from public.visitors where full_name = 'Visitante Antigo' and phone is null and contact_consent_at is null), 1);
+select tests.eq('retenção: contato de visitante recente preservado', (select count(*) from public.visitors where full_name = 'Visitante Recente' and phone is not null), 1);
+
+-- ===== Aviso à administração: contribuição Pix confirmada =====
+insert into public.pix_charges (church_id, membership_id, purpose, amount_cents, status)
+  select :'church_w', id, 'dizimo', 12345, 'pending' from public.church_memberships where church_id = :'church_w' and user_id = '00000000-0000-0000-0000-0000000000e3' returning id as pix_w \gset
+select tests.eq('pix pendente não notifica', (select count(*) from public.notifications where dedupe_key = 'pix:' || :'pix_w'), 0);
+update public.pix_charges set status = 'approved', paid_at = now() where id = :'pix_w';
+select tests.eq('pix aprovado notifica só administradores', (select count(*) from public.notifications n join public.church_memberships m on m.church_id = n.church_id and m.user_id = n.user_id where n.dedupe_key = 'pix:' || :'pix_w' and m.role <> 'admin'), 0);
+select tests.eq('pix aprovado notifica o administrador', (select count(*) from public.notifications where dedupe_key = 'pix:' || :'pix_w' and user_id = '00000000-0000-0000-0000-0000000000e1' and body = 'Pix de R$ 123,45 confirmado (dízimo).'), 1);
+select tests.eq('aviso não identifica o contribuinte', (select count(*) from public.notifications where dedupe_key = 'pix:' || :'pix_w' and (body ilike '%e3%' or title ilike '%e3%')), 0);
+update public.pix_charges set updated_at = now() where id = :'pix_w';
+select tests.eq('reprocessar não duplica o aviso', (select count(*) from public.notifications where dedupe_key = 'pix:' || :'pix_w' and user_id = '00000000-0000-0000-0000-0000000000e1'), 1);
