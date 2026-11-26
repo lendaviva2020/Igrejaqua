@@ -436,6 +436,40 @@ update public.churches set name = 'Hack' where id = :'church_a';
 reset role;
 select tests.eq('membro não renomeia a igreja', (select count(*) from public.churches where name = 'Hack'), 0);
 
+-- ---------- Presença (R-26) ----------
+insert into public.events (church_id, title, kind, starts_at, ends_at) values (:'church_a','Culto de teste de presença','service', now() - interval '10 minutes', now() + interval '60 minutes') returning id as ev_att \gset
+insert into public.event_sessions (church_id, event_id, name, starts_at, ends_at) values (:'church_a', :'ev_att', 'Aberta', now() - interval '10 minutes', now() + interval '60 minutes') returning id as s_open \gset
+insert into public.event_sessions (church_id, event_id, name, starts_at, ends_at) values (:'church_a', :'ev_att', 'Futura', now() + interval '3 days', now() + interval '3 days 1 hour') returning id as s_future \gset
+insert into public.event_sessions (church_id, event_id, name, starts_at, ends_at) values (:'church_a', :'ev_att', 'Encerrada', now() - interval '3 days', now() - interval '3 days' + interval '1 hour') returning id as s_past \gset
+select id as mem_a4 from public.church_memberships where church_id = :'church_a' and user_id = '00000000-0000-0000-0000-0000000000a4' \gset
+select id as mem_a2 from public.church_memberships where church_id = :'church_a' and user_id = '00000000-0000-0000-0000-0000000000a2' \gset
+
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+insert into public.attendance_records (church_id, session_id, membership_id) values (:'church_a', :'s_open', :'mem_a4');
+select tests.denied('check-in duplicado', format($q$insert into public.attendance_records (church_id,session_id,membership_id) values (%L,%L,%L)$q$, :'church_a', :'s_open', :'mem_a4'));
+select tests.denied('check-in antes da janela', format($q$insert into public.attendance_records (church_id,session_id,membership_id) values (%L,%L,%L)$q$, :'church_a', :'s_future', :'mem_a4'));
+select tests.denied('check-in depois do fim', format($q$insert into public.attendance_records (church_id,session_id,membership_id) values (%L,%L,%L)$q$, :'church_a', :'s_past', :'mem_a4'));
+select tests.denied('check-in em nome de outra pessoa', format($q$insert into public.attendance_records (church_id,session_id,membership_id) values (%L,%L,%L)$q$, :'church_a', :'s_open', :'mem_a2'));
+select tests.denied('membro registra como líder', format($q$insert into public.attendance_records (church_id,session_id,membership_id,method) values (%L,%L,%L,'leader')$q$, :'church_a', :'s_open', :'mem_a2'));
+select tests.eq('membro vê só a própria presença', (select count(*) from public.attendance_records), 1);
+delete from public.attendance_records;
+reset role;
+select tests.eq('membro não apaga presença (RLS filtra)', (select count(*) from public.attendance_records where session_id = :'s_open'), 1);
+
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+insert into public.attendance_records (church_id, session_id, membership_id, method) values (:'church_a', :'s_past', :'mem_a2', 'leader');
+select tests.eq('líder de escala vê presenças', (select count(*) from public.attendance_records), 2);
+delete from public.attendance_records where session_id = :'s_past';
+reset role;
+select tests.eq('líder removeu presença', (select count(*) from public.attendance_records where session_id = :'s_past'), 0);
+
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.eq('outra igreja não vê presenças', (select count(*) from public.attendance_records), 0);
+reset role;
+
 -- ---------- Convites: autorização do painel de membros ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;

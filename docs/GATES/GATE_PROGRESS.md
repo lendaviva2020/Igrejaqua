@@ -62,3 +62,8 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - `/configuracoes`: perfil próprio (nome, como prefere ser chamado, telefone), troca de senha (encerra outras sessões), "Baixar meus dados" (`/api/me/export`, JSON lido com a sessão do titular via RLS; pedidos de oração ficam de fora para preservar o anonimato), pedido formal ao titular (acesso, correção, eliminação, portabilidade, revogação; prazo de 15 dias no banco).
 - Administração: dados da igreja (nome, razão social, CNPJ, fuso) e caixa de pedidos de titulares (iniciar, concluir, recusar). A execução da eliminação/anonimização em si continua manual, conforme DATABASE.md, até haver procedimento validado juridicamente.
 - Evidência: tsc, eslint, build, vitest (119), Playwright (22), SQL (pedidos, perfil, renomear igreja).
+
+## Presença / check-in (Gate 4)
+- Na página do evento, cada sessão tem o painel "Presença": "Estou aqui" (check-in próprio, só na janela R-26: 60 min antes do início até o fim, imposta por `private.attendance_guard`, migration `…001200`), e para quem tem `manage_schedule`: lista de presentes, registro manual por liderança e remoção.
+- Membro comum só enxerga a própria presença (RLS). Pessoas com vínculo não ativo não podem ser registradas.
+- Evidência: tsc, eslint, build, vitest, Playwright, SQL (janela, duplicidade, impersonação, permissões, isolamento).

@@ -9,6 +9,9 @@ import { listMinistries } from "@/modules/ministries/queries";
 import { listLineupForSessions, listPeopleForMinistries } from "@/modules/schedules/queries";
 import { getRsvpSummary } from "@/modules/rsvp/queries";
 import { listPublishedVersionOptions, listSetlists } from "@/modules/setlists/queries";
+import { getAttendance } from "@/modules/attendance/queries";
+import { isCheckInOpen } from "@/modules/attendance/schemas";
+import { AttendancePanel } from "./attendance-panel";
 import { LineupPanel } from "./lineup-panel";
 import { RsvpButtons } from "./rsvp-buttons";
 import { SetlistPanel } from "./setlist-panel";
@@ -24,12 +27,14 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
   if (event === null) notFound();
   const sessionIds = event.event_sessions.map((x) => x.id);
   const canSetlist = can(ctx, "setlist.manage");
-  const [tz, ministries, lineup, setlist, rsvp, versionOptions] = await Promise.all([
+  const canRecordOthers = can(ctx, "attendance.record.others");
+  const [tz, ministries, lineup, setlist, rsvp, attendance, versionOptions] = await Promise.all([
     getChurchTimezone(ctx.churchId),
     listMinistries(ctx.churchId),
     listLineupForSessions(ctx.churchId, ctx.membershipId, sessionIds),
     listSetlists(ctx.churchId, sessionIds),
     getRsvpSummary(ctx.churchId, ctx.membershipId, sessionIds),
+    getAttendance(ctx.churchId, ctx.membershipId, sessionIds, canRecordOthers),
     canSetlist ? listPublishedVersionOptions(ctx.churchId) : Promise.resolve([]),
   ]);
   const relevantMinistries = ministries.filter((m) => can(ctx, "schedule.edit", m.id) || lineup.some((l) => l.ministryId === m.id));
@@ -42,6 +47,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
         <article key={s.id} aria-labelledby={`s-${s.id}`} className="mb-8">
           <h3 id={`s-${s.id}`} className="text-xl">{s.name} <time dateTime={s.starts_at} className="tabular text-sm text-texto-2">{fmt.format(new Date(s.starts_at))}</time></h3>
           <RsvpButtons sessionId={s.id} current={rsvp.mine[s.id]} goingCount={can(ctx, "attendance.record.others") ? (rsvp.goingCount[s.id] ?? 0) : undefined} />
+          <AttendancePanel sessionId={s.id} open={isCheckInOpen(new Date(s.starts_at), new Date(s.ends_at), new Date())} checkedIn={attendance.mineBySession[s.id] === true} canRecordOthers={canRecordOthers} entries={attendance.entriesBySession[s.id] ?? []} people={attendance.people} />
           <SetlistPanel sessionId={s.id} items={setlist.filter((x) => x.sessionId === s.id)} options={versionOptions} canEdit={canSetlist} />
           {relevantMinistries.length === 0 ? <p className="py-3 text-sm text-texto-2">Nenhuma escala visível para você nesta sessão.</p> : relevantMinistries.map((m) => (
             <LineupPanel
