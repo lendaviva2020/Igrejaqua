@@ -192,6 +192,24 @@ select tests.eq('escalado confirmou', (select count(*) from public.event_lineup 
 with d as (delete from public.event_lineup where id = :'l1' returning 1) select tests.eq('escalado não remove escala (0 linhas)', (select count(*) from d), 0);
 reset role;
 
+-- ---------- Eventos: função respeita permissão e fuso da igreja ----------
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.denied('membro cria evento via função', format($q$select public.create_event(%L,'X','service','2027-04-04 09:00','2027-04-04 11:00')$q$, :'church_a'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select public.create_event(:'church_a','Culto Páscoa','service','2027-04-04 09:00','2027-04-04 11:00','Templo') as ev_c \gset
+select tests.eq('horário local 09:00 (UTC-3) = 12:00Z', (select count(*) from public.events where id = :'ev_c' and starts_at = '2027-04-04 12:00:00+00'), 1);
+select tests.eq('sessão principal criada', (select count(*) from public.event_sessions where event_id = :'ev_c'), 1);
+select public.add_event_session(:'ev_c','Ensaio','2027-04-04 07:30','2027-04-04 08:30', :'min_a') as s_c2 \gset
+select tests.eq('janela do evento cobre a nova sessão', (select count(*) from public.events where id = :'ev_c' and starts_at = '2027-04-04 10:30:00+00'), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.denied('outra igreja adiciona sessão', format($q$select public.add_event_session(%L,'Invasora','2027-04-04 07:30','2027-04-04 08:30')$q$, :'ev_c'));
+reset role;
+
 -- ---------- Indisponibilidade: motivo privado; líder só vê booleano ----------
 select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
 set role authenticated;

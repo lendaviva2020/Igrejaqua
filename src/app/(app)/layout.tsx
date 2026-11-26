@@ -5,8 +5,10 @@ import { resolveChurchContext } from "@/lib/auth/context";
 
 const NAV: readonly NavItem[] = [
   { href: "/dashboard", label: "Painel", icon: "painel" },
+  { href: "/agenda", label: "Agenda", icon: "agenda" },
   { href: "/ministerios", label: "Ministérios", icon: "ministerios" },
   { href: "/repertorio", label: "Repertório", icon: "repertorio" },
+  { href: "/disponibilidade", label: "Disponibilidade", icon: "disponibilidade" },
 ];
 
 export default async function AppLayout({ children }: { children: ReactNode }) {
