@@ -1,18 +1,18 @@
 # CLAUDE.md — IGREJAQUA
 
-Plataforma SaaS multi-tenant de gestão de igrejas. **Estado atual: GATE 0 (arquitetura). Não há código de aplicação.** Leia `docs/ARCHITECTURE.md` antes de qualquer mudança. Comunique-se em português (Brasil).
+Plataforma SaaS multi-tenant de gestão de igrejas. **Estado atual: Gates 1–6 implementados (ver `docs/GATES/GATE_PROGRESS.md`); Gate 4 em andamento.** Leia `docs/ARCHITECTURE.md` antes de qualquer mudança. Comunique-se em português (Brasil).
 
 ## Regras inegociáveis
 - Nunca gerar código quebrado; sem `any`, sem `// TODO`, sem placeholders, sem dados fictícios em produção.
 - Segredos (`SUPABASE_SERVICE_ROLE_KEY`, `DEEPSEEK_API_KEY`) só no servidor; `lib/supabase/admin.ts` tem `import 'server-only'`.
-- Todo dado de igreja tem `church_id`; FKs compostas `(church_id,id)`; RLS forçada. `church_id` nunca vem do cliente.
+- Todo dado de igreja tem `church_id`; FKs compostas `(church_id,id)`; RLS habilitada (não FORCE: helpers SECURITY DEFINER em `private`). `church_id` nunca vem do cliente.
 - Autorizar com `supabase.auth.getUser()`, nunca `getSession()`.
 - IA é consultiva: `coleta → geração → validação determinística → revisão humana → rascunho → publicação`. Nunca publica sozinha.
 - Não declarar algo concluído sem evidência (saída de `tsc`, `lint`, `build`, testes, pgTAP).
-- Não criar migrations antes da aprovação do Gate 0/2. Não sobrescrever nem apagar trabalho existente sem autorização.
+- Mudanças de schema só por migration nova e testada (`supabase/tests`). Não sobrescrever nem apagar trabalho existente sem autorização.
 
-## Comandos (a definir no Gate 1; manter esta lista atualizada)
-`pnpm typecheck` · `pnpm lint` · `pnpm build` · `pnpm test` · `pnpm test:e2e` · `supabase test db`
+## Comandos (npm)
+`npm run typecheck` · `npm run lint` · `npm run build` · `npm test` · `npm run test:e2e` · `npm run test:sql` · `npm run check`
 
 ## Onde está cada coisa
 Arquitetura `docs/ARCHITECTURE.md` · Banco `docs/DATABASE.md` · RBAC `docs/RBAC.md` · Segurança `docs/SECURITY.md` · Regras `docs/DOMAIN_RULES.md` · IA `docs/AI_ENGINE.md` · UX `docs/UX_DESIGN.md` · Gates `docs/IMPLEMENTATION_ROADMAP.md` · ADRs `docs/ADR/`.

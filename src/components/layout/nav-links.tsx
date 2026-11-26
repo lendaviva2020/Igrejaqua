@@ -2,11 +2,11 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { CalendarDays, CalendarOff, LayoutDashboard, Library, Users, type LucideIcon } from "lucide-react";
+import { CalendarDays, CalendarOff, HandHeart, LayoutDashboard, Library, Users, type LucideIcon } from "lucide-react";
 import { cn } from "@/lib/utils/cn";
 
-export interface NavItem { readonly href: string; readonly label: string; readonly icon: "painel" | "agenda" | "ministerios" | "repertorio" | "disponibilidade" }
-const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, agenda: CalendarDays, disponibilidade: CalendarOff };
+export interface NavItem { readonly href: string; readonly label: string; readonly icon: "painel" | "agenda" | "ministerios" | "repertorio" | "disponibilidade" | "oracao" }
+const ICONS: Record<NavItem["icon"], LucideIcon> = { painel: LayoutDashboard, ministerios: Users, repertorio: Library, agenda: CalendarDays, disponibilidade: CalendarOff, oracao: HandHeart };
 
 export function NavLinks({ items, orientation }: { items: readonly NavItem[]; orientation: "side" | "bottom" }) {
   const pathname = usePathname();

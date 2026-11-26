@@ -8,6 +8,7 @@ const NAV: readonly NavItem[] = [
   { href: "/agenda", label: "Agenda", icon: "agenda" },
   { href: "/ministerios", label: "Ministérios", icon: "ministerios" },
   { href: "/repertorio", label: "Repertório", icon: "repertorio" },
+  { href: "/oracao", label: "Oração", icon: "oracao" },
   { href: "/disponibilidade", label: "Disponibilidade", icon: "disponibilidade" },
 ];
 
