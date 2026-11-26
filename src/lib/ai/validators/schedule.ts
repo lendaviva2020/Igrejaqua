@@ -13,6 +13,7 @@ export type ViolationCode =
   | "OVERLAP"
   | "MONTHLY_LIMIT"
   | "ROTATION_GAP"
+  | "SLOT_EXCEEDED"
   | "SESSION_INVALID";
 
 export interface Violation {

@@ -552,6 +552,60 @@ select tests.denied('convite expirado', $q$select public.accept_invitation('tok-
 select tests.denied('convite revogado', $q$select public.accept_invitation('tok-novo')$q$);
 reset role;
 
+
+-- ---------- Motor de IA: execuções, consentimento e rascunho ----------
+insert into public.events (church_id, title, kind, status, starts_at, ends_at) values (:'church_a', 'Culto IA', 'service', 'scheduled', now() + interval '5 days', now() + interval '5 days 2 hours') returning id as ev_ai \gset
+insert into public.event_sessions (church_id, event_id, name, starts_at, ends_at, ministry_id) values (:'church_a', :'ev_ai', 'Culto IA', now() + interval '5 days', now() + interval '5 days 2 hours', :'min_a') returning id as s_ai \gset
+insert into public.ministry_memberships (church_id, ministry_id, membership_id, role, instruments)
+  select :'church_a', :'min_a', id, 'member', '{bateria}' from public.church_memberships where church_id = :'church_a' and user_id = '00000000-0000-0000-0000-0000000000a4' returning id as mm_ai \gset
+
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select tests.denied('IA desativada por padrão bloqueia a execução', format($q$select public.ai_begin_schedule_run(%L,'schedule-v1','abc')$q$, :'s_ai'));
+reset role;
+update public.church_settings set ai_enabled = true, ai_data_sharing_consent_at = now() where church_id = :'church_a';
+
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.denied('membro comum não inicia execução de IA', format($q$select public.ai_begin_schedule_run(%L,'schedule-v1','abc')$q$, :'s_ai'));
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.denied('líder de outra igreja não inicia execução', format($q$select public.ai_begin_schedule_run(%L,'schedule-v1','abc')$q$, :'s_ai'));
+reset role;
+
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select public.ai_begin_schedule_run(:'s_ai','schedule-v1','digest1') as run_ai \gset
+select tests.eq('execução criada como pending', (select count(*) from public.ai_generation_runs where id = :'run_ai' and status = 'pending' and requested_by = '00000000-0000-0000-0000-0000000000a3'), 1);
+select tests.denied('aceitar antes de validar', format($q$select public.ai_accept_schedule_run(%L)$q$, :'run_ai'));
+select tests.denied('status final inválido', format($q$select public.ai_finish_run(%L,'accepted','m',1,1,'{}','{}')$q$, :'run_ai'));
+select public.ai_finish_run(:'run_ai','validated','modelo-x',10,5,'{"assignments":[]}', jsonb_build_object('ok', true, 'accepted', jsonb_build_array(jsonb_build_object('ministry_membership_id', :'mm_ai', 'function', 'bateria'))));
+select tests.denied('execução finalizada não finaliza de novo', format($q$select public.ai_finish_run(%L,'error','m',1,1,'{}','{}')$q$, :'run_ai'));
+reset role;
+
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.denied('membro comum não aceita sugestão', format($q$select public.ai_accept_schedule_run(%L)$q$, :'run_ai'));
+select tests.denied('membro comum não finaliza execução alheia', format($q$select public.ai_finish_run(%L,'error','m',1,1,'{}','{}')$q$, :'run_ai'));
+reset role;
+
+select tests.login('00000000-0000-0000-0000-0000000000a3','a3@a.test');
+set role authenticated;
+select tests.eq('aceite cria 1 rascunho', public.ai_accept_schedule_run(:'run_ai'), 1);
+select tests.eq('rascunho nasce draft/source=ai com ai_run_id', (select count(*) from public.event_lineup where session_id = :'s_ai' and status = 'draft' and source = 'ai' and ai_run_id = :'run_ai'), 1);
+select tests.eq('execução marcada accepted', (select count(*) from public.ai_generation_runs where id = :'run_ai' and status = 'accepted' and accepted_at is not null), 1);
+select tests.denied('aceite repetido', format($q$select public.ai_accept_schedule_run(%L)$q$, :'run_ai'));
+select public.ai_begin_schedule_run(:'s_ai','schedule-v1','digest2') as run_ai2 \gset
+select public.ai_finish_run(:'run_ai2','validation_failed','modelo-x',10,5,'{}','{"ok":false,"accepted":[]}');
+select tests.denied('sugestão reprovada na validação não vira rascunho', format($q$select public.ai_accept_schedule_run(%L)$q$, :'run_ai2'));
+select public.ai_discard_run(:'run_ai2');
+select tests.eq('execução descartada', (select count(*) from public.ai_generation_runs where id = :'run_ai2' and status = 'discarded'), 1);
+select tests.denied('descartar execução já aceita', format($q$select public.ai_discard_run(%L)$q$, :'run_ai'));
+select tests.denied('escrita direta em ai_generation_runs negada', format($q$update public.ai_generation_runs set status = 'accepted' where id = %L$q$, :'run_ai2'));
+reset role;
+select tests.eq('aceite não publicou nada', (select count(*) from public.event_lineup where ai_run_id = :'run_ai' and status <> 'draft'), 0);
+
 -- ---------- Auditoria imutável; anon sem acesso ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;
