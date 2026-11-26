@@ -2,6 +2,7 @@ import type { ReactNode } from "react";
 import { AppShell } from "@/components/layout/app-shell";
 import type { NavItem } from "@/components/layout/nav-links";
 import { resolveChurchContext } from "@/lib/auth/context";
+import { can } from "@/lib/permissions/capabilities";
 import { countUnreadNotifications } from "@/modules/notifications/queries";
 
 const BASE_NAV: readonly NavItem[] = [
@@ -19,7 +20,8 @@ const BASE_NAV: readonly NavItem[] = [
 export default async function AppLayout({ children }: { children: ReactNode }) {
   const ctx = await resolveChurchContext();
   const unread = await countUnreadNotifications(ctx.churchId);
-  const nav = BASE_NAV.map((i) => (i.href === "/notificacoes" ? { ...i, badge: unread } : i));
+  const base = BASE_NAV.map((i) => (i.href === "/notificacoes" ? { ...i, badge: unread } : i));
+  const nav: readonly NavItem[] = can(ctx, "member.invite") ? [...base, { href: "/membros", label: "Membros", icon: "membros" }] : base;
   return (
     <>
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-fundo focus:p-3">Pular para o conteúdo</a>

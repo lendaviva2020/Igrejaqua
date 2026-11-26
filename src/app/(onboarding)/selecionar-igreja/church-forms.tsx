@@ -51,11 +51,11 @@ export function CreateChurchForm() {
   );
 }
 
-export function AcceptInvitationForm() {
+export function AcceptInvitationForm({ initialToken = "" }: { initialToken?: string }) {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, formState: { errors } } = useForm<InviteValues>({ resolver: zodResolver(InviteSchema), defaultValues: { token: "" } });
+  const { register, handleSubmit, formState: { errors } } = useForm<InviteValues>({ resolver: zodResolver(InviteSchema), defaultValues: { token: initialToken } });
   const onSubmit = handleSubmit((v) => {
     setError(null);
     start(async () => {

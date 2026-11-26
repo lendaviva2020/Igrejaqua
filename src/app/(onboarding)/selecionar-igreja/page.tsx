@@ -5,7 +5,8 @@ import { AcceptInvitationForm, CreateChurchForm, SwitchChurchButton } from "./ch
 
 export const metadata: Metadata = { title: "Selecionar igreja" };
 
-export default async function SelectChurchPage() {
+export default async function SelectChurchPage({ searchParams }: { searchParams: Promise<{ convite?: string }> }) {
+  const { convite } = await searchParams;
   const user = await requireUser();
   const churches = await listMyChurches(user.id);
   return (
@@ -25,7 +26,7 @@ export default async function SelectChurchPage() {
         </section>
       ) : null}
       <div className="grid gap-10 md:grid-cols-2">
-        <section aria-labelledby="convite"><h2 id="convite" className="mb-3 text-2xl">Tenho um convite</h2><AcceptInvitationForm /></section>
+        <section aria-labelledby="convite"><h2 id="convite" className="mb-3 text-2xl">Tenho um convite</h2><AcceptInvitationForm {...(convite ? { initialToken: convite.slice(0, 200) } : {})} /></section>
         <section aria-labelledby="nova"><h2 id="nova" className="mb-3 text-2xl">Cadastrar igreja</h2><CreateChurchForm /></section>
       </div>
     </>

@@ -15,6 +15,13 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await expect(page.getByRole("heading", { name: "Entrar" })).toBeVisible();
   });
 
+  test("painel de membros e seleção de igreja exigem login; o link de convite preserva o token", async ({ page }) => {
+    await page.goto("/membros");
+    await expect(page).toHaveURL(/\/login\?next=%2Fmembros$/);
+    await page.goto("/selecionar-igreja?convite=abc123");
+    await expect(page).toHaveURL(/\/login\?next=%2Fselecionar-igreja%3Fconvite%3Dabc123$/);
+  });
+
   test("cabeçalhos de segurança presentes", async ({ request }) => {
     const res = await request.get("/login");
     const h = res.headers();

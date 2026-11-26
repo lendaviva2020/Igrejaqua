@@ -43,3 +43,9 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - Implementado: `pix_charges` (RLS: pagador + admin; cliente só cria intenção), cliente Mercado Pago (`POST /v1/payments`, `X-Idempotency-Key`, expiração -03:00), webhook `/api/webhooks/mercadopago` (HMAC-SHA256 do manifesto `id;request-id;ts`, comparação em tempo constante; status relido na API do provedor; confere `external_reference` e valor), páginas `/contribuir` e `/contribuir/[chargeId]` (QR em SVG, copia e cola, verificação automática).
 - **Não verificado contra o provedor real**: sem chaves, só testado com `fetch` simulado e testes SQL. Pendente: configurar `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET`, cadastrar a URL do webhook no painel e testar em sandbox antes de produção.
 - Pendente: revisão LGPD do dado financeiro por pessoa; conciliação/relatório exportável; estorno pelo app; notificação ao administrador.
+
+## Membros e convites (Gate 4)
+- `/membros` (somente admin): gerar convite (token de 256 bits; só o hash sha256 é gravado; link exibido uma única vez, válido 7 dias), revogar, alterar papel e suspender/reativar. Regras de proteção (não alterar o próprio papel, último admin) permanecem no banco (`memberships_guard`).
+- Aceite: `/selecionar-igreja?convite=<token>` (agora fora do layout `(app)` para evitar loop de redirecionamento de quem ainda não tem igreja); o login preserva a query string via `safeNextPath`.
+- Limitação: não há envio de e-mail; o admin compartilha o link manualmente.
+- Evidência: tsc, eslint, vitest (98 ok), build, Playwright (18), SQL (convites: autorização, cross-tenant, revogação, expiração).

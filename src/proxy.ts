@@ -36,7 +36,7 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
 
   const isPublic = pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
   if (userId === null && !isPublic) {
-    const redirect = NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname)}`, request.url));
+    const redirect = NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname + request.nextUrl.search)}`, request.url));
     redirect.headers.set("content-security-policy", csp);
     return redirect;
   }

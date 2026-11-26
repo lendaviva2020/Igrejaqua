@@ -368,6 +368,44 @@ select tests.denied('admin rebaixa a si mesmo', format($q$update public.church_m
 reset role;
 select tests.denied('remover último admin (service)', format($q$update public.church_memberships set status='left' where church_id=%L and user_id='00000000-0000-0000-0000-0000000000a1'$q$, :'church_a'));
 
+-- ---------- Convites: autorização do painel de membros ----------
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+insert into public.church_invitations (church_id, email, role, token_hash, invited_by) values
+ (:'church_a','novo@a.test','member', encode(extensions.digest('tok-novo','sha256'),'hex'), '00000000-0000-0000-0000-0000000000a1'),
+ (:'church_a','velho@a.test','member', encode(extensions.digest('tok-velho','sha256'),'hex'), '00000000-0000-0000-0000-0000000000a1');
+select tests.denied('admin forja invited_by', format($q$insert into public.church_invitations (church_id,email,role,token_hash,invited_by) values (%L,'f@a.test','member','h1','00000000-0000-0000-0000-0000000000b1')$q$, :'church_a'));
+select tests.denied('admin convida para outra igreja', format($q$insert into public.church_invitations (church_id,email,role,token_hash,invited_by) values (%L,'f@a.test','member','h2','00000000-0000-0000-0000-0000000000a1')$q$, :'church_b'));
+reset role;
+update public.church_invitations set expires_at = now() - interval '1 day' where email = 'velho@a.test';
+
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.denied('membro cria convite', format($q$insert into public.church_invitations (church_id,email,role,token_hash,invited_by) values (%L,'m@a.test','admin','h3','00000000-0000-0000-0000-0000000000a4')$q$, :'church_a'));
+select tests.eq('membro não enxerga convites', (select count(*) from public.church_invitations), 0);
+reset role;
+
+select tests.login('00000000-0000-0000-0000-0000000000b1','b1@b.test');
+set role authenticated;
+select tests.eq('admin de outra igreja não enxerga convites', (select count(*) from public.church_invitations where church_id = :'church_a'), 0);
+delete from public.church_invitations where church_id = :'church_a';
+reset role;
+select tests.eq('delete cross-tenant de convites não removeu nada', (select count(*) from public.church_invitations where email in ('novo@a.test','velho@a.test')), 2);
+
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+select tests.eq('admin enxerga convites pendentes', (select count(*) from public.church_invitations where church_id = :'church_a' and accepted_at is null and email in ('novo@a.test','velho@a.test')), 2);
+delete from public.church_invitations where email = 'novo@a.test' and accepted_at is null;
+reset role;
+select tests.eq('admin revogou convite', (select count(*) from public.church_invitations where email = 'novo@a.test'), 0);
+
+insert into auth.users (id, email, raw_user_meta_data) values ('00000000-0000-0000-0000-0000000000c1','velho@a.test','{"full_name":"Pessoa Velha"}');
+select tests.login('00000000-0000-0000-0000-0000000000c1','velho@a.test');
+set role authenticated;
+select tests.denied('convite expirado', $q$select public.accept_invitation('tok-velho')$q$);
+select tests.denied('convite revogado', $q$select public.accept_invitation('tok-novo')$q$);
+reset role;
+
 -- ---------- Auditoria imutável; anon sem acesso ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;
