@@ -79,3 +79,28 @@ self.addEventListener("fetch", (event) => {
     event.respondWith(fetch(request).catch(offlineFallback));
   }
 });
+
+// Web Push: carga mínima {title, body, url}. O clique só abre caminhos internos.
+self.addEventListener("push", (event) => {
+  let data = {};
+  try { data = event.data ? event.data.json() : {}; } catch { data = {}; }
+  const title = typeof data.title === "string" && data.title ? data.title.slice(0, 80) : "IGREJAQUA";
+  const body = typeof data.body === "string" ? data.body.slice(0, 140) : "";
+  const url = typeof data.url === "string" && /^\/(?!\/)[A-Za-z0-9/_\-.?=&%]*$/.test(data.url) ? data.url : "/notificacoes";
+  event.waitUntil(self.registration.showNotification(title, { body, icon: "/icons/icon-192.png", badge: "/icons/icon-192.png", data: { url } }));
+});
+
+self.addEventListener("notificationclick", (event) => {
+  event.notification.close();
+  const url = event.notification.data && typeof event.notification.data.url === "string" ? event.notification.data.url : "/notificacoes";
+  event.waitUntil(
+    self.clients.matchAll({ type: "window", includeUncontrolled: true }).then((windows) => {
+      for (const client of windows) {
+        if ("focus" in client && new URL(client.url).origin === self.location.origin) {
+          return client.navigate(url).then((c) => (c ? c.focus() : undefined));
+        }
+      }
+      return self.clients.openWindow(url);
+    }),
+  );
+});

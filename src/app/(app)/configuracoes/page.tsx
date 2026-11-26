@@ -3,6 +3,8 @@ import { resolveChurchContext } from "@/lib/auth/context";
 import { can } from "@/lib/permissions/capabilities";
 import { PageHeader } from "@/components/shared/page-header";
 import { getAiState, getChurchData, getMyProfile, listDataRequests } from "@/modules/settings/queries";
+import { getMfaState } from "@/modules/security/queries";
+import { MfaSettings } from "./mfa-settings";
 import { NewPasswordForm } from "../../(auth)/redefinir-senha/new-password-form";
 import { AiSettings, ChurchForm, DsrAdminRow, DsrForm, ProfileForm } from "./settings-client";
 import { DSR_KIND_LABEL, DSR_STATUS_LABEL } from "@/modules/settings/schemas";
@@ -13,7 +15,7 @@ const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short
 export default async function SettingsPage() {
   const ctx = await resolveChurchContext();
   const isAdmin = can(ctx, "church.settings.update");
-  const [profile, church, requests, ai] = await Promise.all([getMyProfile(ctx.userId), isAdmin ? getChurchData(ctx.churchId) : Promise.resolve(null), listDataRequests(ctx.churchId, ctx.userId), isAdmin ? getAiState(ctx.churchId) : Promise.resolve(null)]);
+  const [profile, church, requests, ai, mfa] = await Promise.all([getMyProfile(ctx.userId), isAdmin ? getChurchData(ctx.churchId) : Promise.resolve(null), listDataRequests(ctx.churchId, ctx.userId), isAdmin ? getAiState(ctx.churchId) : Promise.resolve(null), getMfaState(ctx.role)]);
   const mine = requests.filter((r) => r.mine);
   const toHandle = requests.filter((r) => !r.mine || isAdmin);
   return (
@@ -22,6 +24,7 @@ export default async function SettingsPage() {
       <div className="flex flex-col gap-12">
         <section aria-labelledby="perfil"><h2 id="perfil" className="mb-3 text-2xl">Meu perfil</h2><ProfileForm initial={{ fullName: profile.full_name, displayName: profile.display_name ?? "", phone: profile.phone ?? "" }} /></section>
         <section aria-labelledby="senha"><h2 id="senha" className="mb-3 text-2xl">Senha</h2><div className="max-w-md"><NewPasswordForm /></div></section>
+        <section aria-labelledby="mfa"><h2 id="mfa" className="mb-3 text-2xl">Verificação em duas etapas</h2><MfaSettings factorId={mfa.factorId} promptEnrollment={mfa.promptEnrollment} /></section>
         <section aria-labelledby="privacidade">
           <h2 id="privacidade" className="mb-3 text-2xl">Privacidade e meus dados</h2>
           <p className="mb-4 max-w-prose text-texto-2">Você pode baixar uma cópia dos seus dados ou fazer um pedido formal à administração da igreja. O prazo de resposta é de 15 dias.</p>

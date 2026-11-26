@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { needsMfaChallenge } from "@/lib/auth/mfa-policy";
 import { MINISTRY_PERMISSIONS, type AuthContext } from "@/lib/permissions/capabilities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -61,6 +62,11 @@ export async function resolveChurchContext(): Promise<AuthContext & { churchName
   const churches = await listMyChurches(user.id);
   const chosen = (preferred.success ? churches.find((c) => c.churchId === preferred.data) : undefined) ?? (churches.length === 1 ? churches[0] : undefined);
   if (chosen === undefined) redirect("/selecionar-igreja");
+
+  if (chosen.role === "admin") {
+    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
+    if (needsMfaChallenge(chosen.role, aal?.currentLevel ?? null, aal?.nextLevel ?? null)) redirect("/mfa");
+  }
 
   const { data: membership, error: mErr } = await supabase
     .from("church_memberships")

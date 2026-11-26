@@ -8,27 +8,29 @@ Regra do projeto: **só é "feito" o que tem evidência abaixo.**
 2. Contexto de igreja por cookie revalidado (ADR-0003).
 3. IA **desligada por padrão**; nenhuma chamada à DeepSeek foi implementada nem executada. Ativar exige parecer jurídico (transferência internacional + dado religioso).
 
-## Evidência (última execução)
+## Evidência (última execução — 2026-11-26)
 ```
-typecheck (tsc 6.0.3)         OK
-lint (eslint 9, next+ts)      OK
-build (next 16.4.6)           Compiled successfully; Proxy (Middleware) reconhecido
-vitest                        6 arquivos / 70 testes passaram
-testes SQL (Postgres 16)      TODOS OS TESTES SQL PASSARAM  (RLS, isolamento, regras de escala, oração, auditoria)
-playwright (Chrome, mobile+desktop)  12 passed
+typecheck (tsc)               OK
+lint (eslint)                 OK
+build (next 16)               OK (Proxy reconhecido; /api/cron/deliver e /mfa compilados)
+vitest                        20 arquivos / 171 testes passaram
+testes SQL (Postgres 16)      TODOS OS TESTES SQL PASSARAM (RLS, regras, IA, retenção, fila de entrega, inscrição de push)
+playwright (Chrome)           46 passed (mobile+desktop)
+web-push                      par VAPID gerado e aceito; assunto inválido recusado (execução real da biblioteca)
 ```
-Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (leitura do autor de oração, leitura de ministérios, visibilidade de rascunho); a suíte falhou nas três. Uma lacuna foi encontrada (rascunho de escala visível a outros membros não era testado) e corrigida com teste novo.
+Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito, suíte falhou nas três; uma lacuna encontrada e corrigida.
+**Nada foi exercitado contra Supabase hospedado, DeepSeek, Resend, Mercado Pago ou serviço de push real.**
 
 ## Estado por Gate
-| Gate | Estado | O que existe (com evidência) | O que NÃO existe |
+| Gate | Estado | Implementado (com evidência) | Pendente / bloqueado |
 |---|---|---|---|
-| 1 Design System | PARCIAL | tokens (cor/tipografia/espaço), Button, FormField, PageHeader, EmptyState, ChordSheet, Stage; contrastes calculados | rota `/design`, Storybook, aprovação do Designer humano, axe automatizado |
-| 2 Banco/Auth/RLS | **IMPLEMENTADO localmente** | 7 migrations, RLS em todas as tabelas, FKs compostas, triggers (R-07..R-11), auditoria append-only, funções de convite/igreja/oração/música; suíte SQL | **não aplicado a nenhum projeto Supabase real**; fluxo de Auth real (e-mail, convite por e-mail, magic link) nunca executado; tipos gerados; pgTAP |
-| 3 Navegação | PARCIAL | proxy (sessão, CSP com nonce, redirect), shell por papel, seleção/criação de igreja, convite por código | rotas de agenda, escalas, disponibilidade, comunidade, notificações, configurações |
-| 4 Módulos | PARCIAL | ministérios (listar/criar), repertório (listar/criar/ver), transposição, Stage por versão de música, painel com agenda e "minha escala" | membros e convites (UI admin), permissões de ministério (UI), eventos/sessões (UI), escalas (UI), setlist por sessão, RSVP, presença, comunicados, oração (UI), PIX, notificações |
-| 5 Integrações | PARCIAL (bibliotecas) | schema Zod da saída de IA, pseudonimização, validador determinístico (R-07..R-14), parser ChordPro, teoria musical, rate limit | cliente DeepSeek, rotas `/api/ai/*`, jobs/cron, Web Push, e-mail, BR Code PIX, MFA, service worker/offline |
-| 6 Testes/Segurança | PARCIAL | testes acima; varredura de segredos no bundle; headers | pentest, carga, auditoria WCAG completa (axe), restauração de backup |
-| 7 Homologação | NOT_IMPLEMENTED | — | tudo |
+| 1 Design System | IMPLEMENTADO | tokens "Noite & Âmbar", componentes base, Stage Mode, axe automatizado (E2E) | aprovação do designer humano |
+| 2 Banco/Auth/RLS | IMPLEMENTADO localmente | 17 migrations, RLS em todas as tabelas, FKs compostas, triggers, auditoria append-only, suíte SQL | aplicar em Supabase real; fluxo de Auth real; tipos gerados |
+| 3 Navegação | IMPLEMENTADO | proxy (sessão, CSP nonce), shell por papel, seleção de igreja, convites | — |
+| 4 Módulos | IMPLEMENTADO | ministérios, repertório, agenda/escalas, membros/convites, presença, comunicados, oração, notificações, configurações/LGPD, publicação agendada, contribuições Pix | Onda 2 (ledger financeiro, famílias, visitantes, células) |
+| 5 Integrações | IMPLEMENTADO (código e testes locais) | motor de IA consultiva (escala), PWA/offline, retenção de dados (`private.run_retention`), fila de e-mail (Resend) e Web Push (VAPID) com worker `/api/cron/deliver`, MFA TOTP para admin | chamadas reais (DeepSeek, Resend, push); parecer jurídico (LGPD art. 33) antes de ligar a IA; demais capacidades de IA (repertório, tom vocal, ensaio, transições); agendar o worker e `pg_cron` |
+| 6 Testes/Segurança | PARCIAL | testes acima, varredura de segredos no bundle, headers, axe | pentest, carga, restauração de backup |
+| 7 Homologação | NÃO INICIADO | — | tudo |
 
 ## Bugs reais encontrados e corrigidos durante a execução
 1. CSP com nonce deixava páginas estáticas sem JavaScript → `await connection()` no layout raiz + E2E de hidratação.
@@ -94,3 +96,12 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 - Pipeline `src/lib/ai/*`, rotas `/api/ai/schedule` e `/api/ai/runs/[runId]`, ativação em Configurações (admin) e painel "Sugestão por IA" na sessão (só com IA ativa, configurada e permissão `schedule.edit`).
 - Testes: 147+ unitários (cliente com retry/disjuntor/truncamento, pseudonimização sem vazamento, rotação, injeção, validação) e guarda E2E das rotas.
 - Limites: sem chamada real ao provedor (chave e modelo pendentes); parecer jurídico LGPD pendente antes de usar em produção.
+
+## Passo 5 — retenção, entrega (e-mail/push) e MFA
+- **Retenção**: `private.run_retention()` (notificações lidas 180 d / não lidas 365 d, saída bruta de IA 90 d, entregas 90 d, rate limits 2 d, idempotência 7 d, convites vencidos); sobrescrita por igreja em `church_settings.retention_policy`; `audit_logs` nunca é apagado; agendado por `pg_cron` às 03:17 apenas se a extensão existir. Testado na suíte SQL.
+- **Fila de entrega**: tabela `notification_deliveries` + trigger de enfileiramento (e-mail só com opt-in explícito; push só com inscrição ativa e sem opt-out); `claim_notification_deliveries` (`SKIP LOCKED`, reabre "sending" > 5 min), `complete_notification_delivery` (backoff 1/2/4/8 min, falha final na 5ª tentativa), `drop_push_subscription`; todas restritas a `service_role`. `save_push_subscription`/`remove_push_subscription` para o usuário (aparelho compartilhado: o último a entrar assume o endpoint).
+- **Worker**: `GET|POST /api/cron/deliver` com `Authorization: Bearer $CRON_SECRET` (tempo constante; 503 sem segredo). Canal sem configuração é marcado `skipped`, nunca como enviado. **Agendamento é externo** (Vercel Cron/Schedules ou `pg_cron`+`pg_net` chamando a rota a cada minuto); não há `vercel.json` assumido.
+- **Departure da lista fechada de service role**: `src/modules/notifications/delivery-store.ts` foi adicionado (ESLint + SECURITY §6); só chama as 3 funções SQL da fila.
+- **Falha real encontrada por teste**: links `//host` passavam no filtro de "caminho interno" (e abririam site externo no clique do push) → regex agora exige `/` seguido de não-`/` em e-mail, payload e service worker.
+- **MFA**: TOTP via Supabase Auth; admin com fator cadastrado precisa estar em aal2 (`resolveChurchContext` redireciona para `/mfa`); admin sem fator **não é trancado** (a tela de Configurações convida a cadastrar). Decisão a confirmar: tornar o cadastro obrigatório após o primeiro acesso do administrador. Não verificável sem Supabase real (QR, challenge e unenroll aal2 dependem do servidor).
+- **Observabilidade**: apenas registros de execução da IA (`ai_generation_runs`), `audit_logs` e `console.error` estruturado no worker; sem APM/alertas.

@@ -3,7 +3,7 @@
 Status: **PENDING_REVIEW**
 
 ## 1. Autenticação
-- Supabase Auth: e-mail+senha e magic link; OAuth Google opcional (Gate 5). MFA TOTP **obrigatório para `admin`** e opcional para demais (Gate 6).
+- Supabase Auth: e-mail+senha e magic link; OAuth Google opcional (Gate 5). MFA TOTP: admin com fator cadastrado precisa de aal2 (`/mfa`); admin sem fator é convidado a cadastrar (obrigatoriedade total pendente de decisão); opcional para demais.
 - Política de senha mínima 12 caracteres + verificação de senhas vazadas (HIBP, se habilitado no projeto Supabase).
 - Confirmação de e-mail obrigatória. Convites por token de uso único, hash SHA-256 no banco, expiração 7 dias.
 - Callback `/callback` valida `next` contra allowlist de caminhos internos (anti open-redirect).
@@ -35,7 +35,7 @@ Ver `RBAC.md`. Resumo: papel de igreja (`admin|leader|member`) em `church_member
 
 ## 6. Service role e segredos
 - `SUPABASE_SERVICE_ROLE_KEY` e `DEEPSEEK_API_KEY`: apenas variáveis de ambiente do servidor (sem prefixo `NEXT_PUBLIC_`), arquivo `lib/supabase/admin.ts` com `import 'server-only'`.
-- Usos permitidos do service role (lista fechada): aceite de convite, job de retenção/anonimização LGPD, gravação de `ai_generation_runs`, rate limiting, **escrita de status/QR de `pix_charges` pelo servidor** (`modules/contributions/provider-writes.ts`, único arquivo permitido do módulo; webhook Mercado Pago validado por HMAC e conferido na API do provedor). Cada uso grava `audit_logs`.
+- Usos permitidos do service role (lista fechada): aceite de convite, job de retenção/anonimização LGPD, gravação de `ai_generation_runs`, rate limiting, **escrita de status/QR de `pix_charges` pelo servidor** (`modules/contributions/provider-writes.ts`, único arquivo permitido do módulo; webhook Mercado Pago validado por HMAC e conferido na API do provedor), **fila de entrega de e-mail/push** (`modules/notifications/delivery-store.ts`, único arquivo do módulo; só chama as funções SQL `claim_notification_deliveries`, `complete_notification_delivery` e `drop_push_subscription`, restritas a `service_role`; rota `/api/cron/deliver` exige `Authorization: Bearer $CRON_SECRET`, comparado em tempo constante). Cada uso grava `audit_logs`.
 - Teste CI: grep falha se `service_role`/`DEEPSEEK` aparecer em bundle cliente (`.next/static`).
 - `.env.example` só com nomes; `gitleaks` no CI; rotação documentada.
 

@@ -632,6 +632,116 @@ set role authenticated;
 select tests.denied('admin de outra igreja não ativa IA', format($q$select public.set_church_ai(%L, true, 'ia-v1')$q$, :'church_a'));
 reset role;
 
+
+-- ---------- Retenção de dados ----------
+insert into public.notifications (church_id, user_id, category, title, read_at, created_at) values
+ (:'church_a','00000000-0000-0000-0000-0000000000a2','escala','lida antiga', now() - interval '200 days', now() - interval '210 days'),
+ (:'church_a','00000000-0000-0000-0000-0000000000a2','escala','lida recente', now() - interval '10 days', now() - interval '20 days'),
+ (:'church_a','00000000-0000-0000-0000-0000000000a2','escala','não lida antiga', null, now() - interval '400 days'),
+ (:'church_a','00000000-0000-0000-0000-0000000000a2','escala','não lida recente', null, now() - interval '5 days');
+insert into public.ai_generation_runs (church_id, kind, status, requested_by, prompt_version, raw_output, created_at)
+  values (:'church_a','schedule','generated','00000000-0000-0000-0000-0000000000a3','ret-v1','{"assignments":[]}', now() - interval '120 days'),
+         (:'church_a','schedule','generated','00000000-0000-0000-0000-0000000000a3','ret-v1','{"assignments":[]}', now() - interval '10 days');
+insert into public.rate_limit_buckets (bucket_key, window_start, hits) values ('retencao:antigo', now() - interval '5 days', 1), ('retencao:novo', now(), 1);
+insert into public.idempotency_keys (key, created_at) values ('retencao-antigo', now() - interval '30 days'), ('retencao-novo', now());
+insert into public.church_invitations (church_id, email, role, token_hash, invited_by, expires_at)
+  values (:'church_a','ret-velho@a.test','member','hret1','00000000-0000-0000-0000-0000000000a1', now() - interval '60 days'),
+         (:'church_a','ret-novo@a.test','member','hret2','00000000-0000-0000-0000-0000000000a1', now() + interval '3 days');
+select count(*) as audit_antes from public.audit_logs \gset
+select private.run_retention() ->> 'notifications_read' as r_read, private.run_retention() ->> 'notifications_unread' as r_unread \gset
+select tests.eq('retenção: notificação lida antiga removida (e só ela)', (select count(*) from public.notifications where title = 'lida antiga'), 0);
+select tests.eq('retenção: lida recente preservada', (select count(*) from public.notifications where title = 'lida recente'), 1);
+select tests.eq('retenção: não lida antiga removida', (select count(*) from public.notifications where title = 'não lida antiga'), 0);
+select tests.eq('retenção: não lida recente preservada', (select count(*) from public.notifications where title = 'não lida recente'), 1);
+select tests.eq('retenção: saída bruta da IA antiga anulada', (select count(*) from public.ai_generation_runs where prompt_version = 'ret-v1' and created_at < now() - interval '100 days' and raw_output is null), 1);
+select tests.eq('retenção: saída bruta recente preservada', (select count(*) from public.ai_generation_runs where created_at > now() - interval '20 days' and raw_output is not null and prompt_version = 'ret-v1'), 1);
+select tests.eq('retenção: bucket e idempotência antigos removidos', (select count(*) from public.rate_limit_buckets where bucket_key = 'retencao:antigo') + (select count(*) from public.idempotency_keys where key = 'retencao-antigo'), 0);
+select tests.eq('retenção: bucket e idempotência novos preservados', (select count(*) from public.rate_limit_buckets where bucket_key = 'retencao:novo') + (select count(*) from public.idempotency_keys where key = 'retencao-novo'), 2);
+select tests.eq('retenção: convite expirado há muito removido, vigente preservado', (select count(*) from public.church_invitations where email = 'ret-velho@a.test') * 10 + (select count(*) from public.church_invitations where email = 'ret-novo@a.test'), 1);
+select tests.eq('retenção: auditoria nunca diminui (a própria remoção pode ser auditada)', (select (count(*) >= :audit_antes)::int from public.audit_logs), 1);
+select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
+set role authenticated;
+select tests.denied('admin não executa a retenção', $q$select private.run_retention()$q$);
+reset role;
+
+-- ---------- Fila de entrega (e-mail e push) ----------
+insert into public.push_subscriptions (user_id, endpoint, p256dh, auth_secret) values ('00000000-0000-0000-0000-0000000000a2', 'https://push.exemplo.test/a2', 'chave-p256', 'chave-auth');
+insert into public.notification_preferences (church_id, user_id, category, channel, enabled) values
+  (:'church_a','00000000-0000-0000-0000-0000000000a2','escala','email', true),
+  (:'church_a','00000000-0000-0000-0000-0000000000a2','comunicado','push', false);
+insert into public.notifications (church_id, user_id, category, title, body, link_path, dedupe_key) values
+  (:'church_a','00000000-0000-0000-0000-0000000000a2','escala','Você foi escalado(a)','Culto, bateria','/agenda/x','e1'),
+  (:'church_a','00000000-0000-0000-0000-0000000000a2','comunicado','Aviso','Texto','/comunicados','e2'),
+  (:'church_a','00000000-0000-0000-0000-0000000000a4','escala','Sem canais','Texto','/agenda/y','e3');
+select tests.eq('escala de a2: e-mail (opt-in) e push (inscrito) enfileirados', (select count(*) from public.notification_deliveries d join public.notifications n on n.id = d.notification_id where n.dedupe_key = 'e1'), 2);
+select tests.eq('comunicado de a2: push desligado e sem e-mail => nada', (select count(*) from public.notification_deliveries d join public.notifications n on n.id = d.notification_id where n.dedupe_key = 'e2'), 0);
+select tests.eq('a4 sem inscrição nem opt-in => nada', (select count(*) from public.notification_deliveries d join public.notifications n on n.id = d.notification_id where n.dedupe_key = 'e3'), 0);
+
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.eq('titular vê as próprias entregas', (select count(*) from public.notification_deliveries), 2);
+select tests.denied('titular não altera entrega', $q$update public.notification_deliveries set status = 'sent'$q$);
+select tests.denied('titular não insere entrega', format($q$insert into public.notification_deliveries (notification_id, church_id, user_id, channel) select id, church_id, user_id, 'email' from public.notifications limit 1$q$));
+select tests.denied('titular não reivindica entregas', $q$select * from public.claim_notification_deliveries(10)$q$);
+select tests.denied('titular não conclui entregas', $q$select public.complete_notification_delivery(gen_random_uuid(), 'sent', null)$q$);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('outro usuário não vê entregas alheias', (select count(*) from public.notification_deliveries), 0);
+reset role;
+
+set role service_role;
+select count(*) as claimed, count(*) filter (where channel = 'email' and email = 'a2@a.test') as claimed_email, count(*) filter (where channel = 'push' and jsonb_array_length(subscriptions) = 1) as claimed_push from public.claim_notification_deliveries(50) \gset
+reset role;
+select tests.eq('lote reivindicado com e-mail do titular e inscrição de push', :claimed * 100 + :claimed_email * 10 + :claimed_push, 211);
+select tests.eq('reivindicadas ficam em sending com 1 tentativa', (select count(*) from public.notification_deliveries where status = 'sending' and attempts = 1), 2);
+set role service_role;
+select count(*) as reclaimed from public.claim_notification_deliveries(50) \gset
+reset role;
+select tests.eq('lote já reivindicado não é entregue duas vezes', :reclaimed, 0);
+
+select id as d_email from public.notification_deliveries where channel = 'email' \gset
+select id as d_push from public.notification_deliveries where channel = 'push' \gset
+set role service_role;
+select public.complete_notification_delivery(:'d_email', 'failed', 'timeout');
+select public.complete_notification_delivery(:'d_push', 'sent', null);
+reset role;
+select tests.eq('falha volta para pending com espera', (select count(*) from public.notification_deliveries where id = :'d_email' and status = 'pending' and next_attempt_at > now() and last_error = 'timeout'), 1);
+select tests.eq('envio concluído', (select count(*) from public.notification_deliveries where id = :'d_push' and status = 'sent' and sent_at is not null), 1);
+update public.notification_deliveries set attempts = 5 where id = :'d_email';
+set role service_role;
+select public.complete_notification_delivery(:'d_email', 'failed', 'definitivo');
+select public.drop_push_subscription('https://push.exemplo.test/a2');
+reset role;
+select tests.eq('após 5 tentativas a falha é definitiva', (select count(*) from public.notification_deliveries where id = :'d_email' and status = 'failed'), 1);
+select tests.eq('inscrição morta removida', (select count(*) from public.push_subscriptions where endpoint = 'https://push.exemplo.test/a2'), 0);
+select tests.eq('excluir a notificação remove a entrega (cascade)', (select count(*) from (select 1) x where (select count(*) from public.notification_deliveries) = 2), 1);
+
+
+-- ---------- Inscrição de push: aparelho compartilhado ----------
+select tests.login('00000000-0000-0000-0000-0000000000a2','a2@a.test');
+set role authenticated;
+select tests.denied('endpoint http (inseguro) é recusado', $q$select public.save_push_subscription('http://push.exemplo.test/xxxxxxxx','p256dh-p256dh-p256dh-p256','auth-auth-auth')$q$);
+select tests.denied('chave curta é recusada', $q$select public.save_push_subscription('https://push.exemplo.test/xxxxxxxx','curta','auth-auth-auth')$q$);
+select public.save_push_subscription('https://push.exemplo.test/compartilhado','p256dh-p256dh-p256dh-p256','auth-auth-auth');
+select tests.eq('a2 tem a inscrição', (select count(*) from public.push_subscriptions where endpoint = 'https://push.exemplo.test/compartilhado' and user_id = '00000000-0000-0000-0000-0000000000a2'), 1);
+reset role;
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select tests.eq('a4 não remove inscrição alheia', (select count(*) from (select public.remove_push_subscription('https://push.exemplo.test/compartilhado')) x), 1);
+reset role;
+select tests.eq('inscrição de a2 segue intacta após tentativa de a4', (select count(*) from public.push_subscriptions where endpoint = 'https://push.exemplo.test/compartilhado'), 1);
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select public.save_push_subscription('https://push.exemplo.test/compartilhado','p256dh-novo-novo-novo-nov','auth-novo-novo');
+reset role;
+select tests.eq('o último a entrar assume o endpoint (sem duplicar)', (select count(*) from public.push_subscriptions where endpoint = 'https://push.exemplo.test/compartilhado' and user_id = '00000000-0000-0000-0000-0000000000a4'), 1);
+select tests.login('00000000-0000-0000-0000-0000000000a4','a4@a.test');
+set role authenticated;
+select public.remove_push_subscription('https://push.exemplo.test/compartilhado');
+reset role;
+select tests.eq('dono remove a própria inscrição', (select count(*) from public.push_subscriptions where endpoint = 'https://push.exemplo.test/compartilhado'), 0);
+
 -- ---------- Auditoria imutável; anon sem acesso ----------
 select tests.login('00000000-0000-0000-0000-0000000000a1','a1@a.test');
 set role authenticated;

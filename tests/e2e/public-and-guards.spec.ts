@@ -35,6 +35,16 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     expect(aceitar.status()).toBe(307);
   });
 
+  test("trabalhador de entrega só responde com segredo; /mfa exige login", async ({ request, page }) => {
+    const sem = await request.get("/api/cron/deliver", { maxRedirects: 0 });
+    expect([401, 503]).toContain(sem.status());
+    expect(sem.headers()["cache-control"]).toBe("no-store");
+    const errado = await request.post("/api/cron/deliver", { headers: { authorization: "Bearer segredo-errado-segredo-errado" }, maxRedirects: 0 });
+    expect([401, 503]).toContain(errado.status());
+    await page.goto("/mfa");
+    await expect(page).toHaveURL(/\/login\?next=%2Fmfa$/);
+  });
+
   test("landing, privacidade e termos são públicos e sem dados fictícios", async ({ page }) => {
     await page.goto("/");
     await expect(page.getByRole("heading", { level: 1 })).toBeVisible();

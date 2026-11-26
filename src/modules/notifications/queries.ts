@@ -1,6 +1,6 @@
 import "server-only";
 import { z } from "zod";
-import { NOTIFICATION_CATEGORIES, type NotificationCategory } from "./preferences";
+import { CHANNEL_DEFAULT, NOTIFICATION_CATEGORIES, NOTIFICATION_CHANNELS, type ChannelPreferences, type NotificationCategory, type NotificationChannel } from "./preferences";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const Row = z.object({ id: z.string().uuid(), category: z.string(), title: z.string(), body: z.string().nullable(), link_path: z.string().nullable(), read_at: z.string().nullable(), created_at: z.string() });
@@ -20,15 +20,20 @@ export async function countUnreadNotifications(churchId: string): Promise<number
   return count ?? 0;
 }
 
-/** Sem registro = habilitado (padrão do banco em private.notify). */
-export async function getNotificationPreferences(churchId: string): Promise<Readonly<Record<NotificationCategory, boolean>>> {
+/** Sem registro vale o padrão do canal (sistema/celular ligados; e-mail só com opt-in). */
+export async function getChannelPreferences(churchId: string): Promise<ChannelPreferences> {
   const supabase = await createSupabaseServerClient();
-  const { data, error } = await supabase.from("notification_preferences").select("category, enabled").eq("church_id", churchId).eq("channel", "in_app");
+  const { data, error } = await supabase.from("notification_preferences").select("category, channel, enabled").eq("church_id", churchId);
   if (error) throw new Error(`Falha ao carregar preferências: ${error.message}`);
-  const result: Record<NotificationCategory, boolean> = { escala: true, comunicado: true, devocional: true };
-  for (const row of data as { category: string; enabled: boolean }[]) {
+  const result: Record<NotificationChannel, Record<NotificationCategory, boolean>> = {
+    in_app: { escala: CHANNEL_DEFAULT.in_app, comunicado: CHANNEL_DEFAULT.in_app, devocional: CHANNEL_DEFAULT.in_app },
+    email: { escala: CHANNEL_DEFAULT.email, comunicado: CHANNEL_DEFAULT.email, devocional: CHANNEL_DEFAULT.email },
+    push: { escala: CHANNEL_DEFAULT.push, comunicado: CHANNEL_DEFAULT.push, devocional: CHANNEL_DEFAULT.push },
+  };
+  for (const row of data as { category: string; channel: string; enabled: boolean }[]) {
     const cat = NOTIFICATION_CATEGORIES.find((c) => c === row.category);
-    if (cat !== undefined) result[cat] = row.enabled;
+    const channel = NOTIFICATION_CHANNELS.find((c) => c === row.channel);
+    if (cat !== undefined && channel !== undefined) result[channel][cat] = row.enabled;
   }
   return result;
 }
