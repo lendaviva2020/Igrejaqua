@@ -77,3 +77,7 @@ Teste de mutação da RLS: três políticas foram enfraquecidas de propósito (l
 ## Preferências de notificação (Gate 4)
 - `/notificacoes`: chaves por categoria (escala, comunicado, devocional) para o canal "dentro do sistema". Sem registro = ligado; `private.notify` já respeita a preferência. Push e e-mail seguem sem envio (sem provedor), e a tela diz isso.
 - Evidência: tsc, eslint, build, vitest (128), Playwright (22), SQL (upsert sem duplicar, isolamento por titular e por igreja).
+
+### Acessibilidade automatizada (axe)
+- `tests/e2e/a11y.spec.ts`: axe (WCAG 2.0/2.1 A e AA) em `/`, `/login`, `/cadastro`, `/recuperar-senha`, `/privacidade` e `/termos`, em desktop e mobile. Resultado: 12/12 sem violações.
+- Limite: axe cobre só parte dos critérios; faltam telas autenticadas (exigem Supabase real) e revisão manual com leitor de tela.
