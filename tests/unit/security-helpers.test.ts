@@ -3,6 +3,7 @@ import { safeNextPath } from "@/lib/security/safe-redirect";
 import { slugify, CreateMinistrySchema } from "@/modules/ministries/actions-helpers";
 import { fromPostgrestError, zodFieldErrors } from "@/lib/result";
 import { SignUpSchema } from "@/modules/identity/schemas";
+import { extractJoinCode } from "@/modules/churches/join-code";
 import { CreateSongSchema } from "@/modules/repertoire/schemas";
 
 describe("safeNextPath (anti open-redirect)", () => {
@@ -40,8 +41,23 @@ describe("validações Zod", () => {
     expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "curta1" }).success).toBe(false);
     expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "somenteletrasaqui" }).success).toBe(false);
     expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "senhaforte123456" }).success).toBe(false);
-    const ok = SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "Senha-Forte-123" });
+    expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "Senha-Forte-123" }).success).toBe(false);
+    const ok = SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "Senha-Forte-123", intent: "member" });
     expect(ok.success && ok.data.email).toBe("ana@x.com");
+  });
+  it("cadastro: caminho é só liderança ou membro (não aceita papel)", () => {
+    const base = { fullName: "Ana", email: "ana@x.com", password: "Senha-Forte-123" };
+    expect(SignUpSchema.safeParse({ ...base, intent: "leader" }).success).toBe(true);
+    expect(SignUpSchema.safeParse({ ...base, intent: "admin" }).success).toBe(false);
+    expect(SignUpSchema.safeParse({ ...base, intent: "member", role: "admin" }).success).toBe(false);
+  });
+  it("link da igreja: extrai o código do link completo, do convite antigo ou do código puro", () => {
+    const code = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde";
+    expect(extractJoinCode(`https://igreja.app/entrar/${code}`)).toBe(code);
+    expect(extractJoinCode(`  http://localhost:3000/entrar/${code}?x=1 `)).toBe(code);
+    expect(extractJoinCode(`https://igreja.app/selecionar-igreja?convite=${code}`)).toBe(code);
+    expect(extractJoinCode(code)).toBe(code);
+    expect(extractJoinCode("https://evil.example/entrar/<script>")).toBe("https://evil.example/entrar/<script>");
   });
   it("música: tom válido, cifra limitada, campos extras rejeitados", () => {
     expect(CreateSongSchema.safeParse({ title: "A", originalKey: "H", chordpro: "" }).success).toBe(false);

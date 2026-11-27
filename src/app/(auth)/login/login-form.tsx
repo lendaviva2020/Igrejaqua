@@ -34,6 +34,7 @@ export function LoginForm({ next, googleEnabled, linkExpired }: { next: string |
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <h1 className="text-3xl">Entrar</h1>
+      {next?.startsWith("/entrar/") ? <p role="status" className="rounded-superficie border border-ambar bg-superficie-2 p-3 text-sm">Você recebeu o link de uma igreja. Entre ou <Link className="underline" href={`/cadastro?next=${encodeURIComponent(next)}`}>crie sua conta</Link> para pedir a entrada.</p> : null}
       {linkExpired ? <p role="alert" className="text-sm text-perigo">Este link expirou ou já foi usado. Entre ou peça um novo.</p> : null}
       {googleEnabled ? <><GoogleButton next={next} /><OrDivider /></> : null}
       <FormField label="E-mail" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
@@ -43,7 +44,7 @@ export function LoginForm({ next, googleEnabled, linkExpired }: { next: string |
       <p className="text-xs text-texto-2">Ao entrar você aceita os <Link className="underline" href="/termos">Termos de Uso</Link> e declara ter lido a <Link className="underline" href="/privacidade">Política de Privacidade</Link>.</p>
       <div className="flex justify-between text-sm">
         <Link className="text-ambar-claro underline" href="/recuperar-senha">Esqueci a senha</Link>
-        <Link className="text-ambar-claro underline" href="/cadastro">Criar conta</Link>
+        <Link className="text-ambar-claro underline" href={next ? `/cadastro?next=${encodeURIComponent(next)}` : "/cadastro"}>Criar conta</Link>
       </div>
     </form>
   );

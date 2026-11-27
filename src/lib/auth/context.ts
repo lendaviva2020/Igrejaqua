@@ -29,11 +29,26 @@ export interface ChurchSummary {
 }
 
 /** Usuário autenticado validado no servidor Auth (nunca getSession). */
-export async function requireUser(): Promise<{ id: string; email: string }> {
+export async function requireUser(): Promise<{ id: string; email: string; intent: "leader" | "member" | null }> {
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.getUser();
   if (error || !data.user) redirect("/login");
-  return { id: data.user.id, email: data.user.email ?? "" };
+  // Caminho escolhido no cadastro: só orienta as telas, nunca autoriza nada.
+  const intent = z.enum(["leader", "member"]).safeParse(data.user.user_metadata?.["intent"]);
+  return { id: data.user.id, email: data.user.email ?? "", intent: intent.success ? intent.data : null };
+}
+
+export interface PendingJoinRequest { readonly churchId: string; readonly churchName: string; readonly requestedAt: string }
+
+/** Pedidos de entrada do próprio usuário aguardando aprovação (a igreja ainda não é visível pela RLS). */
+export async function listMyPendingJoinRequests(): Promise<readonly PendingJoinRequest[]> {
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.rpc("my_pending_join_requests");
+  if (error) throw new Error(`Falha ao listar pedidos: ${error.message}`);
+  return z
+    .array(z.object({ church_id: z.string().uuid(), church_name: z.string(), requested_at: z.string() }))
+    .parse(data)
+    .map((r) => ({ churchId: r.church_id, churchName: r.church_name, requestedAt: r.requested_at }));
 }
 
 export async function listMyChurches(userId: string): Promise<readonly ChurchSummary[]> {

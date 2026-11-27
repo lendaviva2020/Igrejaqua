@@ -8,3 +8,4 @@ export type InviteInput = z.input<typeof InviteSchema>;
 export const ChangeRoleSchema = z.object({ membershipId: z.string().uuid(), role: z.enum(ROLES) }).strict();
 export const SetStatusSchema = z.object({ membershipId: z.string().uuid(), status: z.enum(["active", "suspended"]) }).strict();
 export const RevokeInviteSchema = z.object({ invitationId: z.string().uuid() }).strict();
+export const DecideJoinSchema = z.object({ membershipId: z.string().uuid(), approve: z.boolean() }).strict();

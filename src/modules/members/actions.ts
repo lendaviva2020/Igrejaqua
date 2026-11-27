@@ -7,8 +7,8 @@ import { can } from "@/lib/permissions/capabilities";
 import { fail, fromPostgrestError, ok, zodFieldErrors, type Result } from "@/lib/result";
 import { allow } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { ChangeRoleSchema, InviteSchema, RevokeInviteSchema, SetStatusSchema } from "./schemas";
-import { generateInviteToken, hashInviteToken } from "./token";
+import { ChangeRoleSchema, DecideJoinSchema, InviteSchema, RevokeInviteSchema, SetStatusSchema } from "./schemas";
+import { generateInviteToken, hashInviteToken, joinLinkUrl } from "./token";
 
 /** O link (com o token em claro) é devolvido UMA vez; no banco fica só o hash. Envio por e-mail ainda não existe: o admin compartilha o link. */
 export async function inviteMemberAction(input: unknown): Promise<Result<{ link: string; expiresInDays: number }>> {
@@ -36,6 +36,44 @@ export async function revokeInvitationAction(input: unknown): Promise<Result<{ r
   if ((data as unknown[]).length === 0) return fail("NOT_FOUND", "Convite não encontrado.");
   revalidatePath("/membros");
   return ok({ revoked: true });
+}
+
+/** Gera (ou troca) o link geral da igreja. O anterior para de funcionar na hora. */
+export async function rotateJoinLinkAction(): Promise<Result<{ link: string }>> {
+  const ctx = await resolveChurchContext();
+  if (!can(ctx, "member.invite")) return fail("FORBIDDEN", "Apenas a administração gera o link da igreja.");
+  if (!(await allow(`join-link:${ctx.userId}`, 10, 3600))) return fail("RATE_LIMITED", "Muitas trocas de link em pouco tempo.");
+  const token = generateInviteToken();
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("rotate_church_join_link", { p_church: ctx.churchId, p_token: token });
+  if (error) return fromPostgrestError(error);
+  revalidatePath("/membros");
+  return ok({ link: joinLinkUrl(token) });
+}
+
+export async function disableJoinLinkAction(): Promise<Result<{ disabled: true }>> {
+  const ctx = await resolveChurchContext();
+  if (!can(ctx, "member.invite")) return fail("FORBIDDEN", "Apenas a administração desativa o link da igreja.");
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.rpc("disable_church_join_link", { p_church: ctx.churchId });
+  if (error) return fromPostgrestError(error);
+  revalidatePath("/membros");
+  return ok({ disabled: true });
+}
+
+/** Aprova (vira membro ativo) ou recusa (status "left"; a pessoa pode pedir de novo) um pedido de entrada. */
+export async function decideJoinRequestAction(input: unknown): Promise<Result<{ status: "active" | "left" }>> {
+  const parsed = DecideJoinSchema.safeParse(input);
+  if (!parsed.success) return fail("VALIDATION", "Dados inválidos.");
+  const ctx = await resolveChurchContext();
+  if (!can(ctx, "member.invite")) return fail("FORBIDDEN", "Apenas a administração aprova pedidos.");
+  const status = parsed.data.approve ? "active" : "left";
+  const supabase = await createSupabaseServerClient();
+  const { data, error } = await supabase.from("church_memberships").update({ status }).eq("church_id", ctx.churchId).eq("id", parsed.data.membershipId).eq("status", "pending").select("id");
+  if (error) return fromPostgrestError(error);
+  if ((data as unknown[]).length === 0) return fail("NOT_FOUND", "Pedido não encontrado ou já decidido.");
+  revalidatePath("/membros");
+  return ok({ status });
 }
 
 export async function changeMemberRoleAction(input: unknown): Promise<Result<{ role: string }>> {

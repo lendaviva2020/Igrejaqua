@@ -3,7 +3,7 @@ import { CHANNEL_DEFAULT, NOTIFICATION_CATEGORIES, RemovePushSubscriptionSchema,
 
 describe("preferências de notificação", () => {
   it("aceita apenas categorias emitidas pelo banco", () => {
-    expect(NOTIFICATION_CATEGORIES).toEqual(["escala", "comunicado", "devocional", "contribuicao"]);
+    expect(NOTIFICATION_CATEGORIES).toEqual(["escala", "comunicado", "devocional", "contribuicao", "membros"]);
     expect(SetPreferenceSchema.safeParse({ category: "comunicado", enabled: false }).success).toBe(true);
     expect(SetPreferenceSchema.safeParse({ category: "marketing", enabled: true }).success).toBe(false);
   });

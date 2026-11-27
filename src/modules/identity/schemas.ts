@@ -11,7 +11,20 @@ const password = z
     "Use letra minúscula, letra maiúscula, número e símbolo");
 
 export const SignInSchema = z.object({ email, password: z.string().min(1, "Informe a senha").max(128), next: z.string().max(300).optional() }).strict();
-export const SignUpSchema = z.object({ fullName: z.string().trim().min(2, "Informe seu nome").max(160), email, password }).strict();
+/**
+ * Caminho escolhido no cadastro. Só decide quais telas a pessoa vê primeiro (criar igreja × entrar por link);
+ * NÃO concede permissão — o papel real vem do vínculo com a igreja (RLS).
+ */
+export const SIGNUP_INTENTS = ["leader", "member"] as const;
+export type SignupIntent = (typeof SIGNUP_INTENTS)[number];
+export const SignUpSchema = z.object({
+  fullName: z.string().trim().min(2, "Informe seu nome").max(160),
+  email,
+  password,
+  intent: z.enum(SIGNUP_INTENTS, { message: "Escolha como você vai usar o IGREJAQUA" }),
+  next: z.string().max(300).optional(),
+}).strict();
+export const SetIntentSchema = z.object({ intent: z.enum(SIGNUP_INTENTS) }).strict();
 export const NewPasswordSchema = z
   .object({ password, confirm: z.string().max(128) })
   .strict()

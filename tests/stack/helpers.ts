@@ -22,7 +22,7 @@ export async function dbValue(sql: string): Promise<string> {
 export async function login(page: Page, email: string): Promise<void> {
   await page.goto("/login");
   await page.getByLabel("E-mail").fill(email);
-  await page.getByLabel("Senha").fill(PASSWORD);
+  await page.getByLabel("Senha", { exact: true }).fill(PASSWORD);
   await page.getByRole("button", { name: "Entrar" }).click();
 }
 

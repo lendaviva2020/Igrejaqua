@@ -89,7 +89,7 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     page.on("console", (m) => { if (/Content Security Policy/i.test(m.text())) violations.push(m.text()); });
     await page.goto("/login");
     await page.getByLabel("E-mail").fill("nao-e-email");
-    await page.getByLabel("Senha").fill("x");
+    await page.getByLabel("Senha", { exact: true }).fill("x");
     await page.getByRole("button", { name: "Entrar" }).click();
     await expect(page.getByText("E-mail inválido")).toBeVisible();
     expect(violations).toEqual([]);
@@ -99,9 +99,19 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await page.goto("/cadastro");
     await page.getByLabel("Nome completo").fill("Ana Souza");
     await page.getByLabel("E-mail").fill("ana@example.com");
-    await page.getByLabel("Senha").fill("curta");
+    await page.getByLabel("Senha", { exact: true }).fill("curta");
     await page.getByRole("button", { name: "Criar conta" }).click();
     await expect(page.getByText("Use ao menos 12 caracteres")).toBeVisible();
+    await expect(page.getByText("Escolha como você vai usar o IGREJAQUA")).toBeVisible();
+  });
+
+  test("link da igreja sem login leva ao login com aviso e ao cadastro já como membro", async ({ page }) => {
+    const code = "AbCdEfGhIjKlMnOpQrStUvWxYz0123456789_-abcde";
+    await page.goto(`/entrar/${code}`);
+    await expect(page).toHaveURL(new RegExp(`/login\\?next=%2Fentrar%2F${code}`));
+    await expect(page.getByText("Você recebeu o link de uma igreja.")).toBeVisible();
+    await page.getByRole("link", { name: "crie sua conta" }).click();
+    await expect(page.getByLabel("Faço parte de uma igreja")).toBeChecked();
   });
 
   test("navegação por teclado alcança os campos do login", async ({ page }) => {
@@ -109,7 +119,7 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     await page.keyboard.press("Tab");
     await expect(page.getByLabel("E-mail")).toBeFocused();
     await page.keyboard.press("Tab");
-    await expect(page.getByLabel("Senha")).toBeFocused();
+    await expect(page.getByLabel("Senha", { exact: true })).toBeFocused();
   });
 
   test("webhook do Pix é público (não redireciona ao login) e nunca aceita sem configuração/assinatura", async ({ request }) => {

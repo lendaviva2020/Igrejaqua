@@ -9,7 +9,7 @@ import { safeNextPath } from "@/lib/security/safe-redirect";
 import { publicEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/lib/site";
-import { GoogleSignInSchema, NewPasswordSchema, ResetRequestSchema, SignInSchema, SignUpSchema } from "./schemas";
+import { GoogleSignInSchema, NewPasswordSchema, ResetRequestSchema, SetIntentSchema, SignInSchema, SignUpSchema, type SignupIntent } from "./schemas";
 
 export async function signInAction(input: unknown): Promise<Result<{ redirectTo: string }>> {
   const parsed = SignInSchema.safeParse(input);
@@ -32,7 +32,11 @@ export async function signUpAction(input: unknown): Promise<Result<{ needsEmailC
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
-    options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/callback` },
+    options: {
+      data: { full_name: parsed.data.fullName, intent: parsed.data.intent },
+      // `next` leva a pessoa de volta ao link da igreja (ex.: /entrar/<código>) depois de confirmar o e-mail.
+      emailRedirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/callback?next=${encodeURIComponent(safeNextPath(parsed.data.next, "/selecionar-igreja"))}`,
+    },
   });
   // Senha recusada pela política do Supabase: avisar (não revela nada sobre o e-mail).
   if (error?.code === "weak_password") {
@@ -70,6 +74,16 @@ export async function signInWithGoogleAction(input: unknown): Promise<Result<{ u
   });
   if (error || !data.url) return fail("UNAVAILABLE", "Não foi possível iniciar a entrada com Google.");
   return ok({ url: data.url });
+}
+
+/** Guarda o caminho escolhido (liderança × membro) para quem entrou antes de existir a pergunta. Só afeta telas. */
+export async function setSignupIntentAction(input: unknown): Promise<Result<{ intent: SignupIntent }>> {
+  const parsed = SetIntentSchema.safeParse(input);
+  if (!parsed.success) return fail("VALIDATION", "Opção inválida.");
+  const supabase = await createSupabaseServerClient();
+  const { error } = await supabase.auth.updateUser({ data: { intent: parsed.data.intent } });
+  if (error) return fail("INTERNAL", "Não foi possível salvar sua escolha agora.");
+  return ok({ intent: parsed.data.intent });
 }
 
 /** Define nova senha na sessão de recuperação/login e encerra as outras sessões. */

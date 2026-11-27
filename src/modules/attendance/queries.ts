@@ -3,7 +3,7 @@ import { z } from "zod";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
 const Row = z.object({ id: z.string().uuid(), session_id: z.string().uuid(), membership_id: z.string().uuid(), method: z.enum(["self", "leader", "qr"]), checked_in_at: z.string() });
-const Dir = z.object({ membership_id: z.string().uuid(), display_name: z.string(), status: z.enum(["invited", "active", "suspended", "left"]) });
+const Dir = z.object({ membership_id: z.string().uuid(), display_name: z.string(), status: z.enum(["invited", "active", "suspended", "left", "pending"]) });
 export interface AttendanceEntry { readonly id: string; readonly membershipId: string; readonly name: string; readonly method: "self" | "leader" | "qr"; readonly checkedInAt: string }
 export interface AttendanceSummary {
   readonly mineBySession: Readonly<Record<string, boolean>>;

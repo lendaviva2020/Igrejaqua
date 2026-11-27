@@ -3,7 +3,7 @@ import { z } from "zod";
 import { MINISTRY_PERMISSIONS, type MinistryPermission } from "@/lib/permissions/capabilities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
-const Dir = z.object({ membership_id: z.string().uuid(), display_name: z.string(), status: z.enum(["invited", "active", "suspended", "left"]) });
+const Dir = z.object({ membership_id: z.string().uuid(), display_name: z.string(), status: z.enum(["invited", "active", "suspended", "left", "pending"]) });
 const Mm = z.object({
   id: z.string().uuid(), membership_id: z.string().uuid(), role: z.enum(["coordinator", "member"]), active: z.boolean(),
   instruments: z.array(z.string()), voice_part: z.string().nullable(),
