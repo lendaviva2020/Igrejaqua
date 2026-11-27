@@ -2,6 +2,7 @@ import "server-only";
 import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { z } from "zod";
+import { getVerifiedAssurance } from "@/lib/auth/assurance";
 import { mfaGate } from "@/lib/auth/mfa-policy";
 import { MINISTRY_PERMISSIONS, type AuthContext } from "@/lib/permissions/capabilities";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
@@ -64,8 +65,8 @@ export async function resolveChurchContext(): Promise<AuthContext & { churchName
   if (chosen === undefined) redirect("/selecionar-igreja");
 
   if (chosen.role === "admin") {
-    const { data: aal } = await supabase.auth.mfa.getAuthenticatorAssuranceLevel();
-    const gate = mfaGate(chosen.role, aal?.currentLevel ?? null, aal?.nextLevel ?? null);
+    const aal = await getVerifiedAssurance(supabase);
+    const gate = mfaGate(chosen.role, aal.currentLevel, aal.nextLevel);
     if (gate === "challenge") redirect("/mfa");
     if (gate === "enroll") redirect("/mfa/configurar");
   }

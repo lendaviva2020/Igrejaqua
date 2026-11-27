@@ -15,6 +15,11 @@ export default defineConfig([
           { group: ["@/lib/supabase/admin"], message: "Service role só em usos permitidos (SECURITY §6). Veja a lista fechada." },
         ],
       }],
+      // Autorização só com dados verificados (CLAUDE.md): getSession() e o AAL sem JWT leem o cookie sem validar.
+      "no-restricted-syntax": ["error",
+        { selector: "CallExpression[callee.property.name='getSession']", message: "Use supabase.auth.getUser() ou getClaims() (getSession não é verificado no servidor)." },
+        { selector: "CallExpression[callee.property.name='getAuthenticatorAssuranceLevel'][arguments.length=0]", message: "Use getVerifiedAssurance() de @/lib/auth/assurance." },
+      ],
     },
   },
   {

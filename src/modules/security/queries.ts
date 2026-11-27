@@ -1,4 +1,5 @@
 import "server-only";
+import { getVerifiedAssurance } from "@/lib/auth/assurance";
 import { needsMfaEnrollment } from "@/lib/auth/mfa-policy";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 
@@ -6,7 +7,7 @@ export interface MfaState { readonly factorId: string | null; readonly promptEnr
 
 export async function getMfaState(role: "admin" | "leader" | "member"): Promise<MfaState> {
   const supabase = await createSupabaseServerClient();
-  const [{ data: factors }, { data: aal }] = await Promise.all([supabase.auth.mfa.listFactors(), supabase.auth.mfa.getAuthenticatorAssuranceLevel()]);
+  const [{ data: factors }, aal] = await Promise.all([supabase.auth.mfa.listFactors(), getVerifiedAssurance(supabase)]);
   const factor = factors?.totp[0] ?? null;
-  return { factorId: factor?.id ?? null, verifiedAt: factor?.updated_at ?? null, promptEnrollment: needsMfaEnrollment(role, aal?.nextLevel ?? null) };
+  return { factorId: factor?.id ?? null, verifiedAt: factor?.updated_at ?? null, promptEnrollment: needsMfaEnrollment(role, aal.nextLevel) };
 }
