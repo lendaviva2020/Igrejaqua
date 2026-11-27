@@ -4,7 +4,7 @@ import { ArrowRight, ArrowUpRight, CalendarCheck, Check, CheckCircle2, ChevronRi
 import type { ReactNode } from "react";
 import { DashboardPreview, StagePreview } from "@/components/marketing/landing-previews";
 import { SocialIcon } from "@/components/marketing/social-icons";
-import { Logo } from "@/components/shared/logo";
+import { BrandName, Logo } from "@/components/shared/logo";
 import { siteConfig } from "@/lib/site";
 
 export const metadata: Metadata = { title: "Organização que aproxima", description: "Ministérios, escalas, cultos, ensaios e louvor da sua igreja em um só lugar." };
@@ -44,8 +44,8 @@ export default function HomePage() {
       <header className="sticky top-0 z-50 border-b border-linha bg-fundo/90 backdrop-blur-md">
         <div className="mx-auto flex h-[72px] max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-3" aria-label="IGREJAQUA, início">
-            <span className="flex size-10 items-center justify-center rounded-xl bg-ambar text-sobre-ambar"><Logo size={24} /></span>
-            <span className="text-[19px] font-bold tracking-wide">IGREJAQUA<span className="text-ambar">.</span></span>
+            <Logo size={34} decorative />
+            <BrandName className="text-[19px]" />
           </Link>
           <nav aria-label="Principal" className="hidden items-center gap-8 md:flex">
             {[["#plataforma", "Plataforma"], ["#louvor", "Louvor"], ["#como-funciona", "Como funciona"], ["#comecar", "Começar"]].map(([href, label]) => (
@@ -189,8 +189,8 @@ export default function HomePage() {
       <footer className="border-t border-linha bg-palco px-5 py-8 text-texto-2 sm:px-8">
         <div className="mx-auto flex max-w-7xl flex-col items-center justify-between gap-5 sm:flex-row">
           <div className="flex items-center gap-3">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-superficie-2 text-ambar-claro"><Logo size={18} /></span>
-            <span className="text-sm font-bold tracking-wide text-texto">IGREJAQUA<span className="text-ambar">.</span></span>
+            <Logo size={22} decorative />
+            <BrandName className="text-sm" />
           </div>
           <p className="text-center text-xs">© {year} IGREJAQUA. Todos os direitos reservados.</p>
           <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-sm">

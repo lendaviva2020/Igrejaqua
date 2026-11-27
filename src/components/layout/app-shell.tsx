@@ -13,7 +13,7 @@ export function AppShell({ churchName, role, items, unread, children }: { church
     <div className="min-h-dvh md:grid md:grid-cols-[16rem_1fr]">
       <aside className="hidden border-r border-linha bg-fundo md:flex md:flex-col md:gap-6 md:p-4" aria-label="Navegação principal">
         <div className="flex items-center gap-3">
-          <Logo size={36} className="shrink-0 text-ambar" />
+          <Logo size={32} />
           <div className="min-w-0">
             <p className="truncate text-base font-semibold">{churchName}</p>
             <p className="text-xs text-texto-2">{ROLE_LABEL[role]}</p>
@@ -29,7 +29,7 @@ export function AppShell({ churchName, role, items, unread, children }: { church
       <div className="min-w-0 pb-24 md:pb-0">
         <header className="flex items-center justify-between gap-3 px-4 py-3 md:hidden">
           <div className="flex min-w-0 items-center gap-2">
-            <Logo size={28} className="shrink-0 text-ambar" />
+            <Logo size={24} />
             <p className="truncate text-base font-semibold uppercase tracking-wide">{churchName}</p>
           </div>
           <div className="flex items-center gap-1">

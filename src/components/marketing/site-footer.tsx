@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { Logo } from "@/components/shared/logo";
+import { BrandName, Logo } from "@/components/shared/logo";
 import type { SiteConfig } from "@/lib/site";
 import { SocialIcon } from "./social-icons";
 
@@ -8,7 +8,7 @@ export function SiteFooter({ site }: { site: SiteConfig }) {
     <footer className="border-t border-linha">
       <div className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-10 md:flex-row md:items-start md:justify-between">
         <div className="flex max-w-xs flex-col gap-3">
-          <div className="flex items-center gap-2 text-ambar"><Logo size={28} /><span className="text-lg font-bold tracking-wide text-texto">IGREJAQUA</span></div>
+          <div className="flex items-center gap-2"><Logo size={26} decorative /><BrandName className="text-lg" /></div>
           <p className="text-sm text-texto-2">{site.churchName ? `Sistema de gestão usado por ${site.churchName}.` : "Sistema de gestão para a vida da igreja."}</p>
           {site.contactEmail ? <a className="text-sm text-ambar-claro underline" href={`mailto:${site.contactEmail}`}>{site.contactEmail}</a> : null}
         </div>

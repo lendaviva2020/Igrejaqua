@@ -1,10 +1,42 @@
-/** Marca IGREJAQUA: casa com cruz (desenho próprio). Herda a cor via currentColor. */
-export function Logo({ size = 32, className }: { size?: number; className?: string }) {
+import Image from "next/image";
+import { cn } from "@/lib/utils/cn";
+
+/** Proporção do emblema (cruz + Bíblia + arco), em public/brand/emblema.webp (512×310). */
+const EMBLEM_RATIO = 512 / 310;
+/** Proporção da logo completa (emblema + nome + "Adorar • Conectar • Servir"), em public/brand/logo.webp (960×757). */
+const FULL_RATIO = 960 / 757;
+
+/** Emblema IGREJAQUA. `size` é a altura em px; a largura acompanha a proporção da arte. */
+export function Logo({ size = 32, className, decorative = false }: { size?: number; className?: string; decorative?: boolean }) {
   return (
-    <svg width={size} height={size} viewBox="0 0 32 32" fill="none" role="img" aria-label="IGREJAQUA" className={className}>
-      <path d="M16 2v6M13 5h6" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-      <path d="M4 16 16 8l12 8v12a1 1 0 0 1-1 1H5a1 1 0 0 1-1-1V16Z" stroke="currentColor" strokeWidth="2" strokeLinejoin="round" />
-      <path d="M12.5 29v-7a3.5 3.5 0 0 1 7 0v7" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
-    </svg>
+    <Image
+      src="/brand/emblema.webp"
+      width={Math.round(size * EMBLEM_RATIO)}
+      height={size}
+      alt={decorative ? "" : "IGREJAQUA"}
+      className={cn("shrink-0 select-none", className)}
+      unoptimized
+      priority
+    />
+  );
+}
+
+/** Nome da marca: "IGREJA" na cor do texto e "QUA" em âmbar, como na logo. */
+export function BrandName({ className }: { className?: string }) {
+  return <span className={cn("font-bold tracking-wide text-texto", className)}>IGREJA<span className="text-ambar">QUA</span></span>;
+}
+
+/** Logo completa com o lema. `width` em px. */
+export function LogoFull({ width = 240, className }: { width?: number; className?: string }) {
+  return (
+    <Image
+      src="/brand/logo.webp"
+      width={width}
+      height={Math.round(width / FULL_RATIO)}
+      alt="IGREJAQUA — Adorar, Conectar, Servir"
+      className={cn("select-none", className)}
+      unoptimized
+      priority
+    />
   );
 }

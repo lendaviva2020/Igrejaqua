@@ -1,7 +1,7 @@
 /* Service worker do IGREJAQUA (docs/SECURITY.md §9).
  * Cacheia SOMENTE: shell estático (/_next/static, /icons), a página /offline e as páginas do Modo Palco
  * que o usuário abriu. Nenhuma outra resposta autenticada é guardada. O logout envia CLEAR_CACHES. */
-const VERSION = "v1";
+const VERSION = "v2"; // v2: nova logo e ícones (2026-11-27)
 const STATIC_CACHE = `iq-static-${VERSION}`;
 const STAGE_CACHE = `iq-stage-${VERSION}`;
 const OFFLINE_URL = "/offline";

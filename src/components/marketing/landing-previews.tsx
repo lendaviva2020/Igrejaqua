@@ -17,7 +17,7 @@ export function DashboardPreview({ churchName }: { churchName: string }) {
       <div aria-hidden="true" className="relative overflow-hidden rounded-[22px] border border-linha bg-superficie shadow-[0_28px_80px_rgba(0,0,0,0.45)]">
         <div className="flex items-center justify-between border-b border-linha px-5 py-4">
           <div className="flex items-center gap-2.5">
-            <span className="flex size-8 items-center justify-center rounded-lg bg-ambar text-sobre-ambar"><Logo size={18} /></span>
+            <Logo size={20} decorative />
             <div>
               <p className="text-xs font-semibold text-texto">{churchName}</p>
               <p className="text-[11px] text-texto-2">Painel de organização</p>
