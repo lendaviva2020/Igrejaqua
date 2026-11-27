@@ -13,3 +13,6 @@ test-results
 
 # capturas e sessões do ambiente de teste isolado
 .stack/
+
+# saída gerada localmente pelo graphify
+graphify-out/

@@ -34,6 +34,12 @@ export async function signUpAction(input: unknown): Promise<Result<{ needsEmailC
     password: parsed.data.password,
     options: { data: { full_name: parsed.data.fullName }, emailRedirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/callback` },
   });
+  // Senha recusada pela política do Supabase: avisar (não revela nada sobre o e-mail).
+  if (error?.code === "weak_password") {
+    return fail("VALIDATION", "Senha fraca: use letra minúscula, letra maiúscula, número e símbolo.", {
+      password: ["Use letra minúscula, letra maiúscula, número e símbolo"],
+    });
+  }
   if (error && error.status !== 422) return fail("INTERNAL", "Não foi possível criar a conta agora.");
   // Resposta idêntica exista ou não o e-mail (anti-enumeração).
   return ok({ needsEmailConfirmation: true });

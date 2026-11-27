@@ -39,7 +39,8 @@ describe("validações Zod", () => {
   it("senha forte e e-mail normalizado", () => {
     expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "curta1" }).success).toBe(false);
     expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "somenteletrasaqui" }).success).toBe(false);
-    const ok = SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "senhaforte123456" });
+    expect(SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "senhaforte123456" }).success).toBe(false);
+    const ok = SignUpSchema.safeParse({ fullName: "Ana", email: "ANA@x.com", password: "Senha-Forte-123" });
     expect(ok.success && ok.data.email).toBe("ana@x.com");
   });
   it("música: tom válido, cifra limitada, campos extras rejeitados", () => {

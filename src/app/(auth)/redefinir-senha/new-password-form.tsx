@@ -4,7 +4,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import Link from "next/link";
 import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
-import { FormField } from "@/components/shared/form-field";
+import { PasswordField } from "@/components/shared/password-field";
 import { Button } from "@/components/ui/button";
 import { updatePasswordAction } from "@/modules/identity/actions";
 import { NewPasswordSchema, type NewPasswordInput } from "@/modules/identity/schemas";
@@ -33,8 +33,8 @@ export function NewPasswordForm() {
   return (
     <form onSubmit={onSubmit} className="flex flex-col gap-5" noValidate>
       <h1 className="text-3xl">Nova senha</h1>
-      <FormField label="Nova senha" type="password" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
-      <FormField label="Repita a nova senha" type="password" autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
+      <PasswordField label="Nova senha" autoComplete="new-password" error={errors.password?.message} {...register("password")} />
+      <PasswordField label="Repita a nova senha" autoComplete="new-password" error={errors.confirm?.message} {...register("confirm")} />
       {formError ? <p role="alert" className="text-sm text-perigo">{formError} <Link className="underline" href="/recuperar-senha">Pedir novo link</Link></p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Salvando…" : "Salvar nova senha"}</Button>
     </form>

@@ -21,7 +21,7 @@ Convenção de rollback: migrations versionadas com `down` documentado; deploys 
 - **Dependências:** G1; revisão humana de `DATABASE.md`/`SECURITY.md`/`RBAC.md`.
 - **Entregáveis:** `supabase/migrations/*`, `supabase/tests/*` (pgTAP), tipos gerados, módulos `identity/churches/members`.
 - **Riscos:** RLS lenta (índices/initplan); recursão de policies; trigger de convite; custo de FKs compostas.
-- **Segurança:** RLS forçada, advisors limpos, service role isolado, teste cross-tenant 100%.
+- **Segurança:** RLS habilitada em todas as tabelas (`ENABLE`, não `FORCE` — ver ADR-0004), advisors limpos, service role isolado, teste cross-tenant 100%.
 - **Testes:** pgTAP, matriz cross-tenant, paridade RBAC, integração de auth.
 - **Aceite:** zero tabela sem RLS; zero vazamento cross-tenant; advisors sem erros.
 - **Rollback:** migração reversa por versão; projeto Supabase de homologação separado; PITR.

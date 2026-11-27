@@ -33,7 +33,9 @@ export function publicEnv(): z.infer<typeof publicSchema> {
 /** Variáveis de servidor. Só importe a partir de código que roda no servidor. */
 export function serverEnv(): z.infer<typeof serverSchema> {
   if (typeof window !== "undefined") throw new Error("serverEnv() chamado no navegador");
-  const parsed = serverSchema.safeParse(process.env);
+  // Linhas vazias do .env (ex.: `CRON_SECRET=`) chegam como "" e significam "não configurado".
+  const env = Object.fromEntries(Object.entries(process.env).map(([k, v]) => [k, v === "" ? undefined : v]));
+  const parsed = serverSchema.safeParse(env);
   if (!parsed.success) {
     throw new Error(`Variáveis de ambiente de servidor inválidas: ${parsed.error.issues.map((i) => i.path.join(".")).join(", ")}`);
   }

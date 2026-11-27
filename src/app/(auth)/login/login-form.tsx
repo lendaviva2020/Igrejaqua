@@ -7,6 +7,7 @@ import { useState, useTransition } from "react";
 import { useForm } from "react-hook-form";
 import { Button } from "@/components/ui/button";
 import { FormField } from "@/components/shared/form-field";
+import { PasswordField } from "@/components/shared/password-field";
 import { GoogleButton, OrDivider } from "@/components/auth/google-button";
 import { signInAction } from "@/modules/identity/actions";
 import { SignInSchema, type SignInInput } from "@/modules/identity/schemas";
@@ -36,7 +37,7 @@ export function LoginForm({ next, googleEnabled, linkExpired }: { next: string |
       {linkExpired ? <p role="alert" className="text-sm text-perigo">Este link expirou ou já foi usado. Entre ou peça um novo.</p> : null}
       {googleEnabled ? <><GoogleButton next={next} /><OrDivider /></> : null}
       <FormField label="E-mail" type="email" autoComplete="email" error={errors.email?.message} {...register("email")} />
-      <FormField label="Senha" type="password" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
+      <PasswordField label="Senha" autoComplete="current-password" error={errors.password?.message} {...register("password")} />
       {formError ? <p role="alert" className="text-sm text-perigo">{formError}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Entrando…" : "Entrar"}</Button>
       <p className="text-xs text-texto-2">Ao entrar você aceita os <Link className="underline" href="/termos">Termos de Uso</Link> e declara ter lido a <Link className="underline" href="/privacidade">Política de Privacidade</Link>.</p>
