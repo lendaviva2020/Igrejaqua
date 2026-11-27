@@ -1,7 +1,19 @@
 import { z } from "zod";
 
 /** Versões de prompt registradas em ai_generation_runs.prompt_version (AI_ENGINE §2). */
-export const PROMPT_VERSIONS = { schedule: "schedule-v1" } as const;
+export const PROMPT_VERSIONS = { schedule: "schedule-v1", repertoire: "repertoire-v1" } as const;
+
+/** Repertório automático (job diário): janela, lote e tamanho do setlist. */
+export const REPERTOIRE_LIMITS = {
+  daysAhead: 5,
+  sessionsPerRun: 10,
+  minSongs: 3,
+  maxSongs: 7,
+  maxEligibleSongs: 150,
+  maxNewSongs: 5,
+  /** Música usada há menos que isto entra com aviso (não bloqueia). */
+  recentDays: 14,
+} as const;
 
 /** Limites de custo, tamanho e abuso (AI_ENGINE §7). */
 export const AI_LIMITS = {

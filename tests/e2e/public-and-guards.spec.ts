@@ -41,6 +41,11 @@ test.describe("rotas públicas e guardas (sem backend)", () => {
     expect(sem.headers()["cache-control"]).toBe("no-store");
     const errado = await request.post("/api/cron/deliver", { headers: { authorization: "Bearer segredo-errado-segredo-errado" }, maxRedirects: 0 });
     expect([401, 503]).toContain(errado.status());
+    for (const metodo of ["get", "post"] as const) {
+      const repertorio = await request[metodo]("/api/cron/repertoire", { headers: { authorization: "Bearer segredo-errado-segredo-errado" }, maxRedirects: 0 });
+      expect([401, 503]).toContain(repertorio.status());
+      expect(repertorio.headers()["cache-control"]).toBe("no-store");
+    }
     await page.goto("/mfa");
     await expect(page).toHaveURL(/\/login\?next=%2Fmfa$/);
     await page.goto("/biblia/joao/3");

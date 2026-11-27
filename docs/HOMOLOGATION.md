@@ -62,6 +62,7 @@ Canal sem chave fica desligado e nada é enviado (e-mail, push, Pix e IA degrada
 |---|---|---|
 | `private.run_retention()` | diária (pg_cron 03:17) | apaga notificações antigas, saída bruta da IA, fila entregue, convites vencidos e contato de visitantes inativos |
 | `/api/cron/deliver` | 1–5 min | e-mail/push; 503 se `CRON_SECRET` ausente |
+| `/api/cron/repertoire` | diária (ex.: 06:00) | rascunhos de repertório por IA para cultos dos próximos 5 dias; 503 sem `CRON_SECRET`; sem `DEEPSEEK_MODEL` responde sem gerar |
 | Revisar `audit_logs` de acesso administrativo | mensal | tabela append-only |
 | Teste de restauração | trimestral | seção 5 |
 | Rotacionar `CRON_SECRET`, tokens do Mercado Pago e Resend | semestral ou após incidente | atualizar na Vercel e redeploy |

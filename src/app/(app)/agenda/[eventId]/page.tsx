@@ -14,6 +14,8 @@ import { isCheckInOpen } from "@/modules/attendance/schemas";
 import { AttendancePanel } from "./attendance-panel";
 import { LineupPanel } from "./lineup-panel";
 import { AiSchedulePanel } from "@/components/ai/ai-schedule-panel";
+import { AiRepertoirePanel } from "@/components/ai/ai-repertoire-panel";
+import { listRepertoireDrafts } from "@/modules/repertoire/ai-drafts";
 import { getAiState } from "@/modules/settings/queries";
 import { RsvpButtons } from "./rsvp-buttons";
 import { SetlistPanel } from "./setlist-panel";
@@ -30,7 +32,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
   const sessionIds = event.event_sessions.map((x) => x.id);
   const canSetlist = can(ctx, "setlist.manage");
   const canRecordOthers = can(ctx, "attendance.record.others");
-  const [tz, ministries, lineup, setlist, rsvp, attendance, versionOptions, ai] = await Promise.all([
+  const [tz, ministries, lineup, setlist, rsvp, attendance, versionOptions, ai, repertoireDrafts] = await Promise.all([
     getChurchTimezone(ctx.churchId),
     listMinistries(ctx.churchId),
     listLineupForSessions(ctx.churchId, ctx.membershipId, sessionIds),
@@ -39,6 +41,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
     getAttendance(ctx.churchId, ctx.membershipId, sessionIds, canRecordOthers),
     canSetlist ? listPublishedVersionOptions(ctx.churchId) : Promise.resolve([]),
     getAiState(ctx.churchId),
+    canSetlist ? listRepertoireDrafts(ctx.churchId, sessionIds) : Promise.resolve([]),
   ]);
   const relevantMinistries = ministries.filter((m) => can(ctx, "schedule.edit", m.id) || lineup.some((l) => l.ministryId === m.id));
   const people = await listPeopleForMinistries(ctx.churchId, relevantMinistries.map((m) => m.id));
@@ -52,6 +55,10 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
           <RsvpButtons sessionId={s.id} current={rsvp.mine[s.id]} goingCount={can(ctx, "attendance.record.others") ? (rsvp.goingCount[s.id] ?? 0) : undefined} />
           <AttendancePanel sessionId={s.id} open={isCheckInOpen(new Date(s.starts_at), new Date(s.ends_at), new Date())} checkedIn={attendance.mineBySession[s.id] === true} canRecordOthers={canRecordOthers} entries={attendance.entriesBySession[s.id] ?? []} people={attendance.people} />
           <SetlistPanel sessionId={s.id} items={setlist.filter((x) => x.sessionId === s.id)} options={versionOptions} canEdit={canSetlist} />
+          {(() => {
+            const draft = repertoireDrafts.find((d) => d.sessionId === s.id);
+            return draft !== undefined && !setlist.some((x) => x.sessionId === s.id) ? <AiRepertoirePanel eventId={event.id} draft={draft} /> : null;
+          })()}
           {relevantMinistries.length === 0 ? <p className="py-3 text-sm text-texto-2">Nenhuma escala visível para você nesta sessão.</p> : relevantMinistries.map((m) => (
             <LineupPanel
               key={m.id}
