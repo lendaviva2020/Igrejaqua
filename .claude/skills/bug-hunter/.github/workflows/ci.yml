@@ -1,0 +1,66 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        node-version: [22, 24]
+        # macOS resolves temp paths through symlinks (/var -> /private/var);
+        # two path-containment bugs only reproduced there.
+        include:
+          - os: macos-latest
+            node-version: 24
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: pnpm/action-setup@v6
+        with:
+          version: 10.28.1
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: ${{ matrix.node-version }}
+          cache: pnpm
+
+      - name: Install dependencies
+        run: pnpm install --frozen-lockfile
+
+      - name: Verify generated runtime assets
+        run: pnpm check:generated
+
+      - name: Run tests
+        run: pnpm test
+
+      - name: Run benchmark quality gate
+        if: matrix.node-version == 24
+        run: pnpm benchmark:gate
+
+      - name: Run preflight check
+        run: node scripts/run-bug-hunter.cjs preflight --skill-dir .
+
+      - name: Inspect package inventory
+        if: matrix.node-version == 24
+        run: pnpm verify:package
+
+      - name: Smoke-test packed consumer installation
+        env:
+          BUG_HUNTER_PACKED_SMOKE: '1'
+        run: node --test scripts/tests/opt-e-packed-smoke.test.cjs
+
+      - name: Verify bin is executable
+        run: test -x bin/bug-hunter
+
+      - name: Verify --version works
+        run: node bin/bug-hunter --version
+
+      - name: Verify --help works
+        run: node bin/bug-hunter --help

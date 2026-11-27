@@ -1,0 +1,6 @@
+{
+  "schemaVersion": 1,
+  "fixture": "test-fixture",
+  "caseId": "fixture-js-express",
+  "labelsFile": "benchmark/private-labels.json"
+}

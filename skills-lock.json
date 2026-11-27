@@ -1,6 +1,20 @@
 {
   "version": 2,
   "skills": {
+    "bug-hunter": {
+      "source": "codexstar69/bug-hunter",
+      "commit": "b412f9885e3ec074625a88c862c3f5b6724ec3b4",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "bd3e0c57845e448eaee49695f626ee7e6f8388bb35cc12daee8d00220d4c6eca"
+    },
+    "diagram-design": {
+      "source": "cathrynlavery/diagram-design",
+      "commit": "795eec47fd376e5dda0b9e056a49520060cd2f13",
+      "sourceType": "github",
+      "skillPath": "skills/diagram-design/SKILL.md",
+      "computedHash": "d48c9ab592486435222c760c347b99e6e27d89b103aaf6b2808b2dec2b57d466"
+    },
     "frontend-design": {
       "source": "anthropics/skills",
       "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
@@ -8,12 +22,33 @@
       "skillPath": "skills/frontend-design/SKILL.md",
       "computedHash": "83485963700bcf11d5bf78118facb301676b69d918fee2e45a95e7f1a2840f6c"
     },
+    "graphify": {
+      "source": "Graphify-Labs/graphify",
+      "commit": "0f22ae762e3e3d0b689fc7ad2b8192740628413b",
+      "sourceType": "github",
+      "skillPath": "graphify/SKILL.md",
+      "computedHash": "0bfc733cb28279630a30e8fd45aae9ecdce3ad5a350fb65e70a47b44daf7de8e"
+    },
+    "humanizer": {
+      "source": "blader/humanizer",
+      "commit": "a32f24407364c74c812b43c15926d638bee1e072",
+      "sourceType": "github",
+      "skillPath": "SKILL.md",
+      "computedHash": "6da5d71e32eb66770b4c1ebe38b7e5c271bfca6290c9248aeb8449a84dbfe914"
+    },
     "skill-creator": {
       "source": "anthropics/skills",
       "commit": "e4bb5d960d87126ff3b3a8af1a104b7db67560ba",
       "sourceType": "github",
       "skillPath": "skills/skill-creator/SKILL.md",
       "computedHash": "2d7f889e6ae93c6c27d699856942c336b5b8644537496987d5571043d059b1dc"
+    },
+    "untangle-codebase": {
+      "source": "caldoai/skills",
+      "commit": "d5b68dace378219890d821adb3685538e2c69b04",
+      "sourceType": "github",
+      "skillPath": "skills/untangle-codebase/SKILL.md",
+      "computedHash": "73791c30d4da2e001bc095732771966338b764e2e7b57bb30a81439cff85aef4"
     },
     "vercel-composition-patterns": {
       "source": "vercel-labs/agent-skills",
