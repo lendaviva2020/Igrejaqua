@@ -9,6 +9,8 @@ import { FormField } from "@/components/shared/form-field";
 import { createSongAction } from "@/modules/repertoire/actions";
 import { CreateSongSchema, MUSICAL_KEYS } from "@/modules/repertoire/schemas";
 import type { z } from "zod";
+import type { SongImportResult } from "@/modules/repertoire/import-actions";
+import { SongImport } from "./song-import";
 
 type FormValues = z.input<typeof CreateSongSchema>;
 
@@ -16,10 +18,24 @@ export function SongForm() {
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);
-  const { register, handleSubmit, reset, formState: { errors } } = useForm<FormValues>({
+  const { register, handleSubmit, reset, getValues, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(CreateSongSchema),
     defaultValues: { title: "", artist: "", originalKey: "G", chordpro: "" },
   });
+  /**
+   * Preenche o formulário com o que foi importado; o que não veio da página mantém o valor atual.
+   * Sem rolagem automática: o resumo e os avisos da importação ficam à vista para a revisão.
+   */
+  const applyImport = (song: SongImportResult): void => {
+    const current = getValues();
+    reset({
+      title: song.title ?? current.title,
+      artist: song.artist ?? current.artist ?? "",
+      originalKey: song.key ?? current.originalKey,
+      chordpro: song.chordpro !== "" ? song.chordpro : current.chordpro,
+      ...(song.bpm !== null ? { bpm: song.bpm } : {}),
+    });
+  };
   const onSubmit = handleSubmit((values) => {
     setError(null);
     start(async () => {
@@ -28,6 +44,8 @@ export function SongForm() {
     });
   });
   return (
+    <>
+    <SongImport onImported={applyImport} />
     <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-4" noValidate>
       <FormField label="Título" error={errors.title?.message} {...register("title")} />
       <FormField label="Autor/Intérprete (opcional)" error={errors.artist?.message} {...register("artist")} />
@@ -49,5 +67,6 @@ export function SongForm() {
       {error ? <p role="alert" className="text-sm text-perigo">{error}</p> : null}
       <Button type="submit" disabled={pending}>{pending ? "Salvando…" : "Salvar música"}</Button>
     </form>
+    </>
   );
 }

@@ -9,7 +9,8 @@ export const CreateSongSchema = z
     artist: z.string().trim().max(200).optional(),
     originalKey: z.string().regex(KEY_PATTERN, "Tonalidade inválida"),
     chordpro: z.string().max(65536, "Cifra grande demais (máx. 64 KB)"),
-    bpm: z.coerce.number().int().min(30).max(300).optional(),
+    // Campo opcional: vazio chega do formulário como "" e não pode virar 0 (reprovaria o mínimo).
+    bpm: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.coerce.number().int("Use um número inteiro de BPM").min(30, "BPM entre 30 e 300").max(300, "BPM entre 30 e 300").optional()),
   })
   .strict();
 export type CreateSongInput = z.infer<typeof CreateSongSchema>;
