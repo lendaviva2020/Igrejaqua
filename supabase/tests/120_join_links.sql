@@ -52,7 +52,10 @@ select tests.eq('repetir o pedido não duplica', (select count(*) from public.re
 select tests.eq('pendente não acessa a igreja', (select count(*) from public.churches where id = :'church_l'), 0);
 select tests.eq('pendente vê o próprio pedido', (select count(*) from public.church_memberships where church_id = :'church_l' and status = 'pending'), 1);
 select tests.eq('lista de pedidos próprios traz a igreja', (select count(*) from public.my_pending_join_requests() p where p.church_id = :'church_l' and p.church_name = 'Igreja Link'), 1);
-select tests.denied('pendente não se aprova', format($q$update public.church_memberships set status = 'active' where church_id = %L and user_id = auth.uid()$q$, :'church_l'));
+-- A RLS não gera erro num UPDATE bloqueado: ela filtra as linhas (0 alteradas). Por isso a prova é o estado
+-- depois da tentativa — o vínculo continua pendente (verificado logo abaixo, já fora do papel authenticated).
+update public.church_memberships set status = 'active' where church_id = :'church_l' and user_id = auth.uid();
+select tests.eq('pendente não se aprova (nenhuma linha visível para atualizar como ativa)', (select count(*) from public.church_memberships where church_id = :'church_l' and user_id = auth.uid() and status = 'active'), 0);
 reset role;
 select tests.eq('vínculo pendente como membro comum', (select count(*) from public.church_memberships where church_id = :'church_l' and user_id = '00000000-0000-0000-0000-0000000000b7' and status = 'pending' and role = 'member'), 1);
 select tests.eq('admin foi notificado', (select count(*) from public.notifications where church_id = :'church_l' and user_id = '00000000-0000-0000-0000-0000000000a7' and category = 'membros'), 1);
@@ -85,8 +88,12 @@ reset role;
 select tests.login('00000000-0000-0000-0000-0000000000b7','fiel@jl.test');
 set role authenticated;
 select tests.denied('suspenso não volta pelo link', $q$select * from public.request_church_join('link2_BBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBBB')$q$);
-select tests.denied('flag manual não libera auto-aprovação', format($q$select set_config('iq.self_join_request','on',false); update public.church_memberships set status = 'active' where church_id = %L and user_id = auth.uid()$q$, :'church_l'));
+-- Mesmo com a flag interna ligada à mão, a RLS filtra o UPDATE (0 linhas): o vínculo segue suspenso.
+select set_config('iq.self_join_request', 'on', false);
+update public.church_memberships set status = 'active' where church_id = :'church_l' and user_id = auth.uid();
+select set_config('iq.self_join_request', '', false);
 reset role;
+select tests.eq('flag manual não libera auto-aprovação', (select count(*) from public.church_memberships where church_id = :'church_l' and user_id = '00000000-0000-0000-0000-0000000000b7' and status = 'suspended'), 1);
 
 -- ===== link desativado =====
 select tests.login('00000000-0000-0000-0000-0000000000a7','pastor@jl.test');

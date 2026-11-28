@@ -27,6 +27,7 @@ export async function createSongAction(input: unknown): Promise<Result<{ songId:
     p_key: parsed.data.originalKey,
     p_chordpro: parsed.data.chordpro,
     p_bpm: parsed.data.bpm ?? null,
+    p_reference_url: parsed.data.referenceUrl ?? null,
   });
   if (error) return fromPostgrestError(error);
   revalidatePath("/repertorio");

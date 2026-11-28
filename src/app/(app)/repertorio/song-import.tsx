@@ -1,7 +1,7 @@
 "use client";
 
 import { useId, useRef, useState, useTransition, type FormEvent } from "react";
-import { AlertTriangle, CheckCircle2, ClipboardPaste, Link2 } from "lucide-react";
+import { AlertTriangle, CheckCircle2, ClipboardPaste, Link2, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { importSongFromLinkAction, type SongImportResult } from "@/modules/repertoire/import-actions";
@@ -14,6 +14,7 @@ const WARNING_TEXT: Readonly<Record<ImportWarning, string>> = {
   "tabs-removed": "As tablaturas ficaram de fora (o repertório guarda acordes e letra).",
   capo: "Há indicação de capotraste; ela foi incluída no início da cifra.",
   "artist-missing": "Não encontramos o artista.",
+  "video-no-chords": "Vídeo não tem cifra: trouxemos música e artista, e o link fica salvo como referência. Agora procure a cifra, copie e cole abaixo.",
 };
 
 type Mode = "link" | "paste";
@@ -57,6 +58,8 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
         return;
       }
       finish(r.data);
+      // Vídeo não tem cifra: o próximo passo natural é colar a cifra.
+      if (r.data.warnings.includes("video-no-chords")) choose("paste");
     });
   };
 
@@ -64,7 +67,8 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
     e.preventDefault();
     setError(null);
     if (pasted.trim() === "") { setError("Cole a cifra no campo antes de converter."); return; }
-    finish({ ...extractSongFromPaste(pasted), sourceHost: null });
+    // Mantém o vídeo de uma importação anterior (YouTube) como referência.
+    finish({ ...extractSongFromPaste(pasted), sourceHost: null, referenceUrl: result?.referenceUrl ?? null });
   };
 
   const tab = (value: Mode, label: string, Icon: typeof Link2) => (
@@ -139,6 +143,16 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
                 </div>
               ))}
             </dl>
+            {result.warnings.includes("video-no-chords") && result.title !== null ? (
+              <a
+                href={`https://www.google.com/search?q=${encodeURIComponent(`cifra ${result.title}${result.artist !== null ? ` ${result.artist}` : ""}`)}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-borda px-4 text-sm font-semibold text-texto hover:border-ambar"
+              >
+                <Search aria-hidden="true" size={16} />Procurar a cifra<span className="sr-only"> (abre em nova aba)</span>
+              </a>
+            ) : null}
             {result.warnings.length > 0 ? (
               <ul className="mt-3 flex flex-col gap-1.5">
                 {result.warnings.map((w) => (

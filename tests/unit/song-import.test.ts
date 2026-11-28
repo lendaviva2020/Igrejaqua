@@ -191,3 +191,41 @@ describe("formulário de música", async () => {
     expect(bad.error?.issues[0]?.message).toBe("BPM entre 30 e 300");
   });
 });
+
+describe("YouTube", async () => {
+  const { youTubeVideoId, splitVideoTitle, youTubeOEmbedUrl, cleanChannelName } = await import("@/modules/repertoire/import/youtube");
+  const ID = "dQw4w9WgXcQ";
+  it("reconhece todos os formatos de link de vídeo", () => {
+    for (const url of [`https://www.youtube.com/watch?v=${ID}`, `https://youtube.com/watch?v=${ID}&list=PL1&t=30s`, `https://m.youtube.com/watch?v=${ID}`, `https://music.youtube.com/watch?v=${ID}&si=abc`, `https://youtu.be/${ID}?si=xyz`, `https://www.youtube.com/shorts/${ID}`, `https://www.youtube.com/live/${ID}`, `https://www.youtube.com/embed/${ID}`]) {
+      expect(youTubeVideoId(url), url).toBe(ID);
+    }
+    for (const url of ["https://www.youtube.com/@canal", "https://www.youtube.com/watch?v=curto", "https://youtube.com.golpe.com/watch?v=dQw4w9WgXcQ", "https://www.cifraclub.com.br/x/", "nao e link"]) {
+      expect(youTubeVideoId(url), url).toBeNull();
+    }
+    expect(youTubeOEmbedUrl(ID)).toBe("https://www.youtube.com/oembed?format=json&url=https%3A%2F%2Fwww.youtube.com%2Fwatch%3Fv%3DdQw4w9WgXcQ");
+  });
+
+  it("separa música e artista nos padrões de título dos canais", () => {
+    expect(splitVideoTitle("Aline Barros - Ressuscita-me (Ao Vivo)", "Aline Barros")).toEqual({ title: "Ressuscita-me", artist: "Aline Barros" });
+    expect(splitVideoTitle("Galileu | Fernandinho (Clipe Oficial)", "Fernandinho")).toEqual({ title: "Galileu", artist: "Fernandinho" });
+    expect(splitVideoTitle("Fernandinho - Galileu [Clipe Oficial] #gospel #louvor", "Fernandinho Oficial")).toEqual({ title: "Galileu", artist: "Fernandinho" });
+    expect(splitVideoTitle("Ressuscita-me - Aline Barros | DVD Extraordinário Amor de Deus", "Aline Barros")).toEqual({ title: "Ressuscita-me", artist: "Aline Barros" });
+    // Canal automático do YouTube Music: título é só a música.
+    expect(splitVideoTitle("Ressuscita-me", "Aline Barros - Topic")).toEqual({ title: "Ressuscita-me", artist: "Aline Barros" });
+    // Sem pista do canal: convenção "Artista - Música".
+    expect(splitVideoTitle("Banda X - Canção Y (Lyric Video)", "Gravadora Z")).toEqual({ title: "Canção Y", artist: "Banda X" });
+    expect(cleanChannelName("ArtistaVEVO")).toBe("Artista");
+  });
+});
+
+describe("link de referência no formulário", async () => {
+  const { CreateSongSchema } = await import("@/modules/repertoire/schemas");
+  it("opcional, só https e até 500 caracteres", () => {
+    const base = { title: "T", originalKey: "G", chordpro: "" };
+    expect(CreateSongSchema.safeParse({ ...base, referenceUrl: "" }).success).toBe(true);
+    expect(CreateSongSchema.parse({ ...base, referenceUrl: " https://youtu.be/dQw4w9WgXcQ " }).referenceUrl).toBe("https://youtu.be/dQw4w9WgXcQ");
+    for (const bad of ["http://youtu.be/x", "javascript:alert(1)", "youtube.com/watch", `https://a.com/${"a".repeat(600)}`]) {
+      expect(CreateSongSchema.safeParse({ ...base, referenceUrl: bad }).success, bad).toBe(false);
+    }
+  });
+});

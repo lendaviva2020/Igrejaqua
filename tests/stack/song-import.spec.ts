@@ -32,3 +32,24 @@ test("link para endereço interno é recusado com mensagem clara (sem conexão)"
   await page.getByRole("button", { name: "Buscar música" }).click();
   await expect(page.locator("main").getByRole("alert")).toHaveText("Use um link completo que comece com https://.");
 });
+
+test("link de referência salvo aparece como Ouvir no YouTube na página da música", async ({ page }) => {
+  await page.goto("/repertorio");
+  await page.getByLabel("Título").fill("Música com Vídeo de Teste");
+  await page.getByLabel("Link de referência (opcional)").fill("https://youtu.be/dQw4w9WgXcQ");
+  await page.getByLabel("Cifra (ChordPro)").fill("[G]Linha de teste");
+  await page.getByRole("button", { name: "Salvar música" }).click();
+  await expect(page).toHaveURL(/\/repertorio\/[0-9a-f-]{36}$/);
+  const ouvir = page.getByRole("link", { name: /Ouvir no YouTube/ });
+  await expect(ouvir).toHaveAttribute("href", "https://youtu.be/dQw4w9WgXcQ");
+  await expect(ouvir).toHaveAttribute("rel", "noopener noreferrer");
+});
+
+test("link de referência inseguro é recusado no formulário", async ({ page }) => {
+  await page.goto("/repertorio");
+  await page.getByLabel("Título").fill("Música Insegura");
+  await page.getByLabel("Link de referência (opcional)").fill("http://youtu.be/dQw4w9WgXcQ");
+  await page.getByRole("button", { name: "Salvar música" }).click();
+  await expect(page.locator("main").getByText("Use um link seguro, começando com https://")).toBeVisible();
+  await expect(page).toHaveURL(/\/repertorio$/);
+});

@@ -20,7 +20,7 @@ export async function getDefaultVersionBySong(churchId: string, songId: string):
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("song_versions")
-    .select("id, song_id, label, original_key, chordpro, bpm, capo, songs(title, artist, copyright_notice)")
+    .select("id, song_id, label, original_key, chordpro, bpm, capo, songs(title, artist, copyright_notice, reference_url)")
     .eq("church_id", churchId)
     .eq("song_id", songId)
     .is("deleted_at", null)
@@ -35,7 +35,7 @@ export async function getVersion(churchId: string, versionId: string): Promise<V
   const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase
     .from("song_versions")
-    .select("id, song_id, label, original_key, chordpro, bpm, capo, songs(title, artist, copyright_notice)")
+    .select("id, song_id, label, original_key, chordpro, bpm, capo, songs(title, artist, copyright_notice, reference_url)")
     .eq("church_id", churchId)
     .eq("id", versionId)
     .is("deleted_at", null)

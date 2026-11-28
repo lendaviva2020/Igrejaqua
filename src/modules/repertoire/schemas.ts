@@ -10,6 +10,11 @@ export const CreateSongSchema = z
     originalKey: z.string().regex(KEY_PATTERN, "Tonalidade inválida"),
     chordpro: z.string().max(65536, "Cifra grande demais (máx. 64 KB)"),
     // Campo opcional: vazio chega do formulário como "" e não pode virar 0 (reprovaria o mínimo).
+    // Link de referência (vídeo/áudio para ensaiar): opcional, só https — vira <a href> na página da música.
+    referenceUrl: z.preprocess(
+      (v) => (typeof v === "string" && v.trim() === "" ? undefined : v),
+      z.string().trim().max(500, "Link longo demais (máx. 500 caracteres)").url("Use um link completo, começando com https://").refine((v) => v.startsWith("https://"), "Use um link seguro, começando com https://").optional(),
+    ),
     bpm: z.preprocess((v) => (v === "" || v === null ? undefined : v), z.coerce.number().int("Use um número inteiro de BPM").min(30, "BPM entre 30 e 300").max(300, "BPM entre 30 e 300").optional()),
   })
   .strict();
@@ -29,7 +34,7 @@ export const VersionRowSchema = z.object({
   chordpro: z.string(),
   bpm: z.number().nullable(),
   capo: z.number().nullable(),
-  songs: z.object({ title: z.string(), artist: z.string().nullable(), copyright_notice: z.string().nullable() }),
+  songs: z.object({ title: z.string(), artist: z.string().nullable(), copyright_notice: z.string().nullable(), reference_url: z.string().nullable() }),
 });
 export type SongRow = z.infer<typeof SongRowSchema>;
 export type VersionRow = z.infer<typeof VersionRowSchema>;

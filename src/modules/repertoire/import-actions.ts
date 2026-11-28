@@ -8,12 +8,43 @@ import { allow } from "@/lib/security/rate-limit";
 import { parseChordPro, ChordProError } from "@/lib/chords/chordpro";
 import { extractSongFromHtml, extractSongFromText, type ImportedSong } from "./import/extract";
 import { fetchPublicPage, PageFetchError, type FetchFailure } from "./import/safe-fetch";
+import { splitVideoTitle, youTubeOEmbedUrl, youTubeVideoId, youTubeWatchUrl } from "./import/youtube";
 
 const ImportFromLinkSchema = z.object({ url: z.string().trim().min(8, "Cole o link da música").max(2048, "Link longo demais") }).strict();
 
 export interface SongImportResult extends ImportedSong {
   /** Domínio de onde os dados vieram (exibido para a revisão); null quando a cifra foi colada. */
   readonly sourceHost: string | null;
+  /** Link de referência para salvar com a música (vídeo); null quando não se aplica. */
+  readonly referenceUrl: string | null;
+}
+
+const OEmbedSchema = z.object({ title: z.string().min(1).max(500), author_name: z.string().max(200).optional() });
+
+/** Vídeo do YouTube: título e canal pelo oEmbed oficial. Vídeo não tem cifra; o link fica como referência. */
+async function importFromYouTube(videoId: string): Promise<Result<SongImportResult>> {
+  let page;
+  try {
+    page = await fetchPublicPage(youTubeOEmbedUrl(videoId), { allowJson: true });
+  } catch (e) {
+    if (e instanceof PageFetchError && (e.reason === "refused" || e.reason === "http-error")) {
+      return fail("NOT_FOUND", "Não conseguimos ler esse vídeo (pode ser privado, removido ou sem permissão de incorporação). Confira o link.");
+    }
+    if (e instanceof PageFetchError) return fail("UNAVAILABLE", FAILURE_MESSAGE[e.reason]);
+    console.error("song_import_youtube_unexpected", e instanceof Error ? e.name : "unknown");
+    return fail("INTERNAL", FAILURE_MESSAGE.network);
+  }
+  let json: unknown;
+  try {
+    json = JSON.parse(page.body);
+  } catch {
+    return fail("UNAVAILABLE", FAILURE_MESSAGE.network);
+  }
+  const data = OEmbedSchema.safeParse(json);
+  if (!data.success) return fail("UNAVAILABLE", FAILURE_MESSAGE.network);
+  const { title, artist } = splitVideoTitle(data.data.title, data.data.author_name ?? null);
+  const warnings: ImportedSong["warnings"] = ["video-no-chords", ...(artist === null ? (["artist-missing"] as const) : [])];
+  return ok({ title, artist, key: null, bpm: null, capo: null, chordpro: "", warnings, sourceHost: "youtube.com", referenceUrl: youTubeWatchUrl(videoId) });
 }
 
 const FAILURE_MESSAGE: Readonly<Record<FetchFailure, string>> = {
@@ -40,6 +71,9 @@ export async function importSongFromLinkAction(input: unknown): Promise<Result<S
   // Cada importação abre uma página externa a partir do servidor: limite por pessoa.
   if (!(await allow(`song-import:${ctx.userId}`, 30, 3600))) return fail("RATE_LIMITED", "Muitas importações seguidas. Aguarde alguns minutos.");
 
+  const videoId = youTubeVideoId(parsed.data.url);
+  if (videoId !== null) return importFromYouTube(videoId);
+
   let page;
   try {
     page = await fetchPublicPage(parsed.data.url);
@@ -64,5 +98,5 @@ export async function importSongFromLinkAction(input: unknown): Promise<Result<S
     if (e instanceof ChordProError) return fail("VALIDATION", "A cifra dessa página é grande demais para o repertório.");
     throw e;
   }
-  return ok({ ...song, sourceHost: new URL(page.url).hostname.replace(/^www\./, "") });
+  return ok({ ...song, sourceHost: new URL(page.url).hostname.replace(/^www\./, ""), referenceUrl: null });
 }

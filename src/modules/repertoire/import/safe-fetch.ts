@@ -91,7 +91,7 @@ function toFetchError(e: Error): PageFetchError {
   return new PageFetchError("network", e.message);
 }
 
-function once(url: URL, deadline: number): Promise<{ status: number; location: string | null; contentType: string; body: Buffer }> {
+function once(url: URL, deadline: number, allowJson: boolean): Promise<{ status: number; location: string | null; contentType: string; body: Buffer }> {
   return new Promise((resolve, reject) => {
     const remaining = deadline - Date.now();
     if (remaining <= 0) return reject(new PageFetchError("timeout"));
@@ -109,7 +109,8 @@ function once(url: URL, deadline: number): Promise<{ status: number; location: s
       // 401/403/429: o site recusa acesso automatizado (proteção contra robôs). Não tentamos contornar.
       if (status === 401 || status === 403 || status === 429) { res.resume(); return reject(new PageFetchError("refused", String(status))); }
       if (status !== 200) { res.resume(); return reject(new PageFetchError("http-error", String(status))); }
-      if (!/^(text\/|application\/xhtml\+xml)/.test(contentType) && contentType !== "") { res.resume(); return reject(new PageFetchError("unsupported-type", contentType)); }
+      const accepted = /^(text\/|application\/xhtml\+xml)/.test(contentType) || (allowJson && /^application\/json/.test(contentType));
+      if (!accepted && contentType !== "") { res.resume(); return reject(new PageFetchError("unsupported-type", contentType)); }
       const declared = Number(res.headers["content-length"] ?? "0");
       if (declared > MAX_BYTES * 4) { res.resume(); return reject(new PageFetchError("too-large")); }
       const chunks: Buffer[] = [];
@@ -130,11 +131,12 @@ function once(url: URL, deadline: number): Promise<{ status: number; location: s
 }
 
 /** Busca a página seguindo redirecionamentos com a mesma validação a cada salto. */
-export async function fetchPublicPage(rawUrl: string): Promise<FetchedPage> {
+/** `allowJson` só para endpoints de dados conhecidos (ex.: oEmbed do YouTube). */
+export async function fetchPublicPage(rawUrl: string, options: { readonly allowJson?: boolean } = {}): Promise<FetchedPage> {
   let url = parseImportUrl(rawUrl);
   const deadline = Date.now() + TIMEOUT_MS;
   for (let hop = 0; hop <= MAX_REDIRECTS; hop += 1) {
-    const r = await once(url, deadline);
+    const r = await once(url, deadline, options.allowJson === true);
     if (r.status >= 300 && r.status < 400) {
       if (r.location === null) throw new PageFetchError("http-error", String(r.status));
       url = parseImportUrl(new URL(r.location, url).toString());

@@ -20,7 +20,7 @@ export function SongForm() {
   const [error, setError] = useState<string | null>(null);
   const { register, handleSubmit, reset, getValues, formState: { errors } } = useForm<FormValues>({
     resolver: zodResolver(CreateSongSchema),
-    defaultValues: { title: "", artist: "", originalKey: "G", chordpro: "" },
+    defaultValues: { title: "", artist: "", originalKey: "G", chordpro: "", referenceUrl: "" },
   });
   /**
    * Preenche o formulário com o que foi importado; o que não veio da página mantém o valor atual.
@@ -33,6 +33,7 @@ export function SongForm() {
       artist: song.artist ?? current.artist ?? "",
       originalKey: song.key ?? current.originalKey,
       chordpro: song.chordpro !== "" ? song.chordpro : current.chordpro,
+      referenceUrl: song.referenceUrl ?? current.referenceUrl ?? "",
       ...(song.bpm !== null ? { bpm: song.bpm } : {}),
     });
   };
@@ -58,6 +59,7 @@ export function SongForm() {
         </div>
         <FormField label="BPM (opcional)" type="number" inputMode="numeric" error={errors.bpm?.message} {...register("bpm")} />
       </div>
+      <FormField label="Link de referência (opcional)" type="url" inputMode="url" autoComplete="off" spellCheck={false} placeholder="https://www.youtube.com/watch?v=…" hint="Vídeo ou áudio para a equipe ouvir antes do ensaio." error={errors.referenceUrl?.message} {...register("referenceUrl")} />
       <div className="flex flex-col gap-1.5">
         <label htmlFor="chordpro" className="text-sm font-medium">Cifra (ChordPro)</label>
         <textarea id="chordpro" rows={10} spellCheck={false} aria-describedby="chordpro-hint" className="rounded-controle border border-borda bg-fundo p-3 font-mono text-sm" {...register("chordpro")} />

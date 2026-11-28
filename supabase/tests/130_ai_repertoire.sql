@@ -1,7 +1,7 @@
 -- IGREJAQUA — testes SQL da IA de repertório (job diário + revisão humana)
 \set ON_ERROR_STOP on
 create schema if not exists tests;
-grant usage on schema tests to authenticated, anon;
+grant usage on schema tests to authenticated, anon, service_role;
 create or replace function tests.login(p_uid uuid, p_email text) returns void language plpgsql as $$
 begin
   perform set_config('request.jwt.claim.sub', p_uid::text, false);
@@ -16,7 +16,7 @@ create or replace function tests.eq(p_label text, p_actual bigint, p_expected bi
 begin
   if p_actual is distinct from p_expected then raise exception 'FALHA [%]: esperado %, obtido %', p_label, p_expected, p_actual; end if;
 end $$;
-grant execute on all functions in schema tests to authenticated, anon;
+grant execute on all functions in schema tests to authenticated, anon, service_role;
 
 insert into auth.users (id, email, raw_user_meta_data) values
  ('00000000-0000-0000-0000-0000000000a8','pastor@rep.test','{"full_name":"Pastor Rep"}'),

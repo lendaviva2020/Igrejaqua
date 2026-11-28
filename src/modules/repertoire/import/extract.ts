@@ -13,7 +13,8 @@ export type ImportWarning =
   | "no-chords"          // a página não tem cifra reconhecível (só título/artista)
   | "tabs-removed"       // tablaturas removidas
   | "capo"               // a página indica capotraste
-  | "artist-missing";
+  | "artist-missing"
+  | "video-no-chords";   // link de vídeo: traz música e artista, mas vídeo não tem cifra
 
 export interface ImportedSong {
   readonly title: string | null;
