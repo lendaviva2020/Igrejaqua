@@ -32,6 +32,16 @@ Supabase → **Authentication → URL Configuration**:
 
 Vale para confirmação de cadastro, recuperação de senha e login com Google. Teste: crie uma conta nova e confira se o botão do e-mail abre `https://igrejaqua.vercel.app/...`.
 
+**Aplicado em 2026-11-28 pela Management API:** `site_url = https://igrejaqua.vercel.app` e `uri_allow_list = https://igrejaqua.vercel.app/**,http://localhost:3000/**` (antes: `http://localhost:3000` e lista vazia).
+
+### 2.2 E-mails de autenticação em português
+Os modelos (confirmação, senha, link de acesso, convite, troca de e-mail e código) ficam em `tools/supabase/auth-emails.ts` (teste: `tests/unit/auth-emails.test.ts`). Para aplicar:
+```
+node --experimental-strip-types tools/supabase/auth-emails.ts https://igrejaqua.vercel.app <mailer_otp_exp> > payload.json
+curl -X PATCH https://api.supabase.com/v1/projects/<ref>/config/auth -H "Authorization: Bearer <token>" -H "Content-Type: application/json" --data @payload.json
+```
+**Bloqueio atual:** no plano gratuito com o envio padrão do Supabase, a API recusa a troca de modelos ("Email template modification is not available for free tier projects using the default email provider"). É preciso configurar **SMTP próprio** (Authentication → Emails → SMTP Settings). O envio padrão também limita a **2 e-mails de autenticação por hora para o projeto inteiro** (`rate_limit_email_sent = 2`): insuficiente para cadastros reais.
+
 ## 3. Primeiro acesso
 
 1. Criar a conta do pastor/administrador e a igreja (fluxo de cadastro). O administrador é obrigado a ativar o **MFA (TOTP)** no primeiro acesso.
