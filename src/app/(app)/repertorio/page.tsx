@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
+import { LibraryBig } from "lucide-react";
 import { EmptyState } from "@/components/shared/empty-state";
 import { PageHeader } from "@/components/shared/page-header";
 import { resolveChurchContext } from "@/lib/auth/context";
@@ -14,7 +15,7 @@ export default async function RepertoirePage() {
   const songs = await listSongs(ctx.churchId);
   return (
     <>
-      <PageHeader title="Repertório" description="Músicas e cifras da igreja." />
+      <PageHeader title="Repertório" description="Músicas e cifras da igreja." actions={<Link href="/repertorio/biblioteca" className="inline-flex min-h-11 items-center gap-2 rounded-full border border-borda px-4 text-sm font-semibold hover:border-ambar"><LibraryBig aria-hidden="true" size={16} className="text-ambar" />Biblioteca aberta</Link>} />
       {songs.length === 0 ? (
         <EmptyState title="Repertório vazio">{can(ctx, "repertoire.manage") ? "Cadastre a primeira música abaixo." : "A liderança ainda não cadastrou músicas."}</EmptyState>
       ) : (

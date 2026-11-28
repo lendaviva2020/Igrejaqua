@@ -87,3 +87,7 @@ Direção visual: PENDING_REVIEW · Implementação: NOT_IMPLEMENTED
 
 ## Landing
 A landing pública (`/`) usa o mesmo tema "Noite & Âmbar" do restante do produto (tokens `fundo`, `superficie`, `texto`, `ambar`, `palco`), com Merriweather nos títulos e seções alternando `fundo` e `superficie`. As ilustrações da interface na landing não exibem nomes, números, datas nem letras de música (sem dados fictícios; letras são protegidas por direitos autorais).
+
+## Biblioteca aberta (Repertório → Biblioteca aberta)
+Hinos e cânticos do WorshipCommonsContent (github.com/ChurchApps/WorshipCommonsContent) com licença que permite o uso pela igreja: domínio público, WorshipCommons License, CC BY e CC BY-SA. Ficam de fora licenças personalizadas (ex.: larry-holder) e não comerciais, e músicas sem tom e sem acordes. Catálogo gerado por `tools/library/build-worshipcommons.ts` em `src/modules/repertoire/library/worshipcommons.json` (só no servidor). Ao adicionar, a música recebe crédito e licença (`songs.copyright_notice`) e o link da fonte (`reference_url`). Para atualizar o catálogo: clonar o repositório e rodar o gerador com o commit de origem.
+
