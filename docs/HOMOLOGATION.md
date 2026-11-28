@@ -19,7 +19,7 @@ Status: **PENDING_REVIEW**. Este documento é o roteiro para colocar a igreja pi
 
 Públicas: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, `NEXT_PUBLIC_SITE_URL`, identidade pública opcional (`NEXT_PUBLIC_CHURCH_NAME` etc.), `NEXT_PUBLIC_VAPID_PUBLIC_KEY`.
 
-Somente servidor (nunca com prefixo `NEXT_PUBLIC_`): `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `MERCADOPAGO_ACCESS_TOKEN`, `MERCADOPAGO_WEBHOOK_SECRET`, `DEEPSEEK_*`.
+Somente servidor (nunca com prefixo `NEXT_PUBLIC_`): `SUPABASE_SERVICE_ROLE_KEY`, `CRON_SECRET`, `RESEND_API_KEY`, `EMAIL_FROM`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT`, `MERCADOPAGO_CLIENT_ID`, `MERCADOPAGO_CLIENT_SECRET`, `MERCADOPAGO_WEBHOOK_SECRET`, `MERCADOPAGO_TOKEN_KEY` (opcionais: Fase 2, ver §2.3), `DEEPSEEK_*`.
 
 Canal sem chave fica desligado e nada é enviado (e-mail, push, Pix e IA degradam sem erro).
 
@@ -33,6 +33,19 @@ Supabase → **Authentication → URL Configuration**:
 Vale para confirmação de cadastro, recuperação de senha e login com Google. Teste: crie uma conta nova e confira se o botão do e-mail abre `https://igrejaqua.vercel.app/...`.
 
 **Aplicado em 2026-11-28 pela Management API:** `site_url = https://igrejaqua.vercel.app` e `uri_allow_list = https://igrejaqua.vercel.app/**,http://localhost:3000/**` (antes: `http://localhost:3000` e lista vazia).
+
+### 2.3 Contribuições: o dinheiro vai para a conta de CADA igreja
+O IGREJAQUA nunca recebe nem repassa dinheiro (não existe conta da plataforma; a antiga `MERCADOPAGO_ACCESS_TOKEN` global foi removida em 2026-11-28).
+
+- **Fase 1 — chave Pix da igreja (sem configuração no servidor):** a administração cadastra em Configurações → Contribuições a chave Pix da conta bancária da igreja (CNPJ, CPF, e-mail, celular ou aleatória), o nome do recebedor (≤ 25) e a cidade (≤ 15). O app gera o Pix copia e cola/QR no padrão do Banco Central (`src/lib/payments/pix-key.ts`, validado contra o exemplo oficial do BCB) com valor e identificador (`txid` = `IQ…`). O dinheiro cai direto no banco da igreja; a tesouraria confere o extrato e confirma em /contribuir (RPC `review_pix_key_charge`, só administração). Toda troca de chave avisa todas as administrações e fica na auditoria.
+- **Fase 2 — Mercado Pago da igreja (opcional, confirmação automática):** cada igreja conecta a PRÓPRIA conta por OAuth (PKCE + state em cookie). Para ativar no IGREJAQUA, uma única vez:
+  1. Mercado Pago Developers → Suas integrações → Criar aplicação (Pagamentos online; produto Pix).
+  2. Em "URLs de redirecionamento", cadastrar `https://<domínio>/api/payments/mercadopago/callback`.
+  3. Em "Webhooks", cadastrar `https://<domínio>/api/webhooks/mercadopago` com o evento **Pagamentos** e copiar a **assinatura secreta**.
+  4. Na Vercel (Production): `MERCADOPAGO_CLIENT_ID`, `MERCADOPAGO_CLIENT_SECRET`, `MERCADOPAGO_WEBHOOK_SECRET` e `MERCADOPAGO_TOKEN_KEY` (`openssl rand -base64 32`; guardar cópia segura: sem ela os tokens salvos não podem ser lidos e as igrejas precisam reconectar). Novo deploy.
+  5. Teste com uma conta de teste do Mercado Pago (Suas integrações → Contas de teste): conectar em Configurações → Contribuições, gerar um Pix, pagar e conferir a confirmação automática.
+  Os tokens das igrejas ficam cifrados (AES-256-GCM) em `church_mercadopago_accounts`, tabela sem acesso para usuários logados (só o servidor). Desconectar apaga as credenciais; revogar de vez é feito pela igreja no próprio Mercado Pago.
+- **Pendências de validação real:** o fluxo OAuth e a assinatura dos webhooks de pagamentos criados com credenciais OAuth foram testados com respostas simuladas; validar no sandbox (passo 5) antes de anunciar. Mesmo sem webhook, a tela de pagamento consulta a API a cada 8 s e o "Já paguei — verificar" atualiza.
 
 ### 2.2 E-mails de autenticação em português
 Os modelos (confirmação, senha, link de acesso, convite, troca de e-mail e código) ficam em `tools/supabase/auth-emails.ts` (teste: `tests/unit/auth-emails.test.ts`). Para aplicar:

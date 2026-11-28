@@ -13,7 +13,13 @@ test.describe("Biblioteca aberta", () => {
     await page.getByLabel("Língua").selectOption("pt");
     await page.getByRole("button", { name: "Buscar", exact: true }).click();
     await expect(page.getByText("1 música encontrada")).toBeVisible();
-    await page.getByRole("button", { name: "Adicionar Marchando vem Jesus! ao repertório" }).click();
+    // Idempotente: se uma execução anterior já adicionou (banco não recriado), abre pela lista do repertório.
+    if (await page.getByText("Já está no repertório").isVisible()) {
+      await page.goto("/repertorio");
+      await page.getByRole("link", { name: /Marchando vem Jesus!/ }).first().click();
+    } else {
+      await page.getByRole("button", { name: "Adicionar Marchando vem Jesus! ao repertório" }).click();
+    }
     await expect(page).toHaveURL(/\/repertorio\/[0-9a-f-]{36}$/);
     await expect(page.getByRole("heading", { level: 1 })).toHaveText("Marchando vem Jesus!");
     await expect(page.getByText("Licença: Domínio público")).toBeVisible();

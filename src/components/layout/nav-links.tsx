@@ -46,7 +46,7 @@ export function SideNavLink({ item, active, eager }: { item: NavItem; active: bo
       <Icon aria-hidden="true" size={18} strokeWidth={1.75} className={active ? "text-ambar" : "text-texto-2 group-hover:text-ambar-claro"} />
       <span className="min-w-0 flex-1 truncate">{item.label}</span>
       <PendingMark />
-      {item.badge !== undefined ? <span className="tabular rounded-full bg-ambar px-2 text-xs font-bold text-sobre-ambar" aria-label={`${item.badge} não lidas`}>{item.badge > 99 ? "99+" : item.badge}</span> : null}
+      {item.badge !== undefined ? <><span aria-hidden="true" className="tabular rounded-full bg-ambar px-2 text-xs font-bold text-sobre-ambar">{item.badge > 99 ? "99+" : item.badge}</span><span className="sr-only"> ({item.badge} não lidas)</span></> : null}
     </Link>
   );
 }

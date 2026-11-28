@@ -43,7 +43,7 @@ function SheetTile({ item, active, onSamePage }: { item: NavItem; active: boolea
       <Icon aria-hidden="true" size={24} strokeWidth={1.75} className="text-ambar" />
       <span className="hyphens-auto break-words" lang="pt-BR">{item.label}</span>
       <PendingMark className="absolute bottom-2" />
-      {item.badge !== undefined ? <span className="tabular absolute right-2 top-2 rounded-full bg-ambar px-1.5 text-[0.7rem] font-bold text-sobre-ambar" aria-label={`${item.badge} não lidas`}>{item.badge > 99 ? "99+" : item.badge}</span> : null}
+      {item.badge !== undefined ? <><span aria-hidden="true" className="tabular absolute right-2 top-2 rounded-full bg-ambar px-1.5 text-[0.7rem] font-bold text-sobre-ambar">{item.badge > 99 ? "99+" : item.badge}</span><span className="sr-only"> ({item.badge} não lidas)</span></> : null}
     </Link>
   );
 }

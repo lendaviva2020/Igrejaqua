@@ -45,7 +45,7 @@ export const PROTECTED_PREFIXES = [
   // (onboarding) e (stage)
   "/entrar", "/selecionar-igreja", "/palco",
   // APIs autenticadas
-  "/api/ai/", "/api/me/",
+  "/api/ai/", "/api/me/", "/api/payments/",
 ] as const;
 
 export type RouteAccess = "indexable" | "public-noindex" | "protected" | "unknown";

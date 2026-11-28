@@ -5,13 +5,15 @@ import { mapMercadoPagoStatus, type ChargeStatus } from "./charge-status";
 const API = "https://api.mercadopago.com";
 const TIMEOUT_MS = 15_000;
 
-export interface MercadoPagoConfig { readonly accessToken: string; readonly webhookSecret: string }
+/** Credencial da conta Mercado Pago DA IGREJA (obtida por OAuth; ver modules/contributions/mp-accounts-store). */
+export interface MercadoPagoConfig { readonly accessToken: string }
 
-/** null = Pix online desativado (chaves ainda não configuradas). */
-const ConfigSchema = z.object({ accessToken: z.string().min(20), webhookSecret: z.string().min(8) });
-export function mercadoPagoConfig(): MercadoPagoConfig | null {
-  // Lê só as variáveis do Pix: o recurso desativado nunca depende das demais chaves de servidor.
-  const parsed = ConfigSchema.safeParse({ accessToken: process.env["MERCADOPAGO_ACCESS_TOKEN"], webhookSecret: process.env["MERCADOPAGO_WEBHOOK_SECRET"] });
+/**
+ * Segredo de assinatura dos webhooks do APLICATIVO do IGREJAQUA no Mercado Pago (não é dinheiro de
+ * ninguém: só autentica os avisos). null = webhooks desligados (a cobrança é reconsultada na API).
+ */
+export function mercadoPagoWebhookSecret(env: Readonly<Record<string, string | undefined>> = process.env): string | null {
+  const parsed = z.string().min(8).safeParse(env["MERCADOPAGO_WEBHOOK_SECRET"]?.trim());
   return parsed.success ? parsed.data : null;
 }
 

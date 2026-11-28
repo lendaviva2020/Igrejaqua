@@ -11,9 +11,15 @@ const serverSchema = z.object({
   DEEPSEEK_BASE_URL: z.string().url().default("https://api.deepseek.com"),
   DEEPSEEK_MODEL: z.string().min(1).optional(),
   CRON_SECRET: z.string().min(16).optional(),
-  /** Pix via Mercado Pago: opcionais — sem eles a contribuição online fica desativada (nunca quebra o app). */
-  MERCADOPAGO_ACCESS_TOKEN: z.string().min(20).optional(),
+  /**
+   * Mercado Pago: aplicativo do IGREJAQUA para cada igreja conectar a PRÓPRIA conta (OAuth). Opcionais —
+   * sem eles só o Pix pela chave da igreja funciona. Não existe conta "da plataforma" recebendo dinheiro.
+   */
+  MERCADOPAGO_CLIENT_ID: z.string().regex(/^\d{5,25}$/).optional(),
+  MERCADOPAGO_CLIENT_SECRET: z.string().min(16).optional(),
   MERCADOPAGO_WEBHOOK_SECRET: z.string().min(8).optional(),
+  /** 32 bytes em base64 (openssl rand -base64 32): cifra os tokens das igrejas no banco. */
+  MERCADOPAGO_TOKEN_KEY: z.string().min(40).optional(),
 });
 
 /** Variáveis públicas (seguro em qualquer ambiente). Falha cedo e com mensagem clara. */

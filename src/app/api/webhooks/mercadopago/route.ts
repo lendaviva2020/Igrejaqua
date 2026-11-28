@@ -1,6 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { z } from "zod";
-import { mercadoPagoConfig, MercadoPagoError } from "@/lib/payments/mercadopago";
+import { MercadoPagoError, mercadoPagoWebhookSecret } from "@/lib/payments/mercadopago";
 import { verifyMercadoPagoSignature } from "@/lib/payments/mercadopago-signature";
 import { syncChargeFromProvider } from "@/modules/contributions/sync";
 
@@ -8,10 +8,14 @@ export const dynamic = "force-dynamic";
 
 const Body = z.object({ type: z.string().optional(), data: z.object({ id: z.union([z.string(), z.number()]).transform(String) }).optional() });
 
-/** Webhook do Mercado Pago. 401 se a assinatura falhar; 503 se o Pix não estiver configurado; 500 faz o provedor reenviar. */
+/**
+ * Webhook do Mercado Pago (aplicativo do IGREJAQUA; os pagamentos são das contas das igrejas).
+ * 401 se a assinatura falhar; 503 se o segredo não estiver configurado; 500 faz o provedor reenviar.
+ * O corpo nunca é confiado: o status vem da API, consultada com a credencial da igreja dona da cobrança.
+ */
 export async function POST(request: NextRequest): Promise<NextResponse> {
-  const cfg = mercadoPagoConfig();
-  if (cfg === null) return NextResponse.json({ ok: false }, { status: 503 });
+  const secret = mercadoPagoWebhookSecret();
+  if (secret === null) return NextResponse.json({ ok: false }, { status: 503 });
 
   const url = new URL(request.url);
   const rawBody: unknown = await request.json().catch(() => null);
@@ -22,7 +26,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
     xSignature: request.headers.get("x-signature"),
     xRequestId: request.headers.get("x-request-id"),
     dataId: url.searchParams.get("data.id"),
-    secret: cfg.webhookSecret,
+    secret,
   });
   if (!valid) return NextResponse.json({ ok: false }, { status: 401 });
 
@@ -30,7 +34,7 @@ export async function POST(request: NextRequest): Promise<NextResponse> {
   if (type !== "payment" || dataId === null) return NextResponse.json({ ok: true, ignored: true });
 
   try {
-    const outcome = await syncChargeFromProvider(cfg, dataId);
+    const outcome = await syncChargeFromProvider(dataId);
     return NextResponse.json({ ok: true, outcome });
   } catch (cause) {
     console.error("mp_webhook_failed", cause instanceof MercadoPagoError ? cause.message : "erro interno");

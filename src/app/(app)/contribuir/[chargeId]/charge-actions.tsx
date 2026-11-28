@@ -3,7 +3,7 @@
 import { useRouter } from "next/navigation";
 import { useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
-import { refreshChargeAction, refundChargeAction } from "@/modules/contributions/actions";
+import { refreshChargeAction, refundChargeAction, reviewPixKeyChargeAction } from "@/modules/contributions/actions";
 
 export function ChargeActions({ chargeId, qrCode, pending: isPending, canRefund }: { chargeId: string; qrCode: string | null; pending: boolean; canRefund: boolean }) {
   const router = useRouter();
@@ -52,6 +52,43 @@ export function ChargeActions({ chargeId, qrCode, pending: isPending, canRefund 
           </div>
         ) : <Button type="button" variant="quiet" onClick={() => setConfirming(true)}>Estornar contribuição</Button>
       ) : null}
+      <p role="status" aria-live="polite" className="text-sm text-perigo">{message}</p>
+    </div>
+  );
+}
+
+/**
+ * Tesouraria: depois de conferir no extrato do banco da igreja, confirma o recebimento (ou marca como não
+ * recebido) de uma contribuição feita pela chave Pix da igreja.
+ */
+export function PixKeyReview({ chargeId }: { chargeId: string }) {
+  const router = useRouter();
+  const [busy, start] = useTransition();
+  const [message, setMessage] = useState<string | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+  const review = (received: boolean) => start(async () => {
+    const r = await reviewPixKeyChargeAction({ chargeId, received });
+    setMessage(r.ok ? null : r.error.message);
+    setRejecting(false);
+    router.refresh();
+  });
+  return (
+    <div className="flex flex-col gap-3 rounded-superficie border border-ambar/60 bg-superficie p-4">
+      <p className="text-sm">Confira no extrato do banco da igreja se este Pix entrou (valor e identificador acima). Depois confirme aqui.</p>
+      {rejecting ? (
+        <div className="flex flex-col gap-2">
+          <p className="text-sm">Marcar como não recebido? A contribuição sai da lista de pendentes.</p>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" variant="danger" disabled={busy} onClick={() => review(false)}>{busy ? "Salvando…" : "Sim, não recebido"}</Button>
+            <Button type="button" variant="quiet" disabled={busy} onClick={() => setRejecting(false)}>Cancelar</Button>
+          </div>
+        </div>
+      ) : (
+        <div className="flex flex-wrap gap-2">
+          <Button type="button" disabled={busy} onClick={() => review(true)}>{busy ? "Salvando…" : "Confirmar recebimento"}</Button>
+          <Button type="button" variant="secondary" disabled={busy} onClick={() => setRejecting(true)}>Não recebido</Button>
+        </div>
+      )}
       <p role="status" aria-live="polite" className="text-sm text-perigo">{message}</p>
     </div>
   );

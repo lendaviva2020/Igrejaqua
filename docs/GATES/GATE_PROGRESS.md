@@ -43,7 +43,7 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 
 ## Atualização — Pix via Mercado Pago (Gate 4/5)
 - Implementado: `pix_charges` (RLS: pagador + admin; cliente só cria intenção), cliente Mercado Pago (`POST /v1/payments`, `X-Idempotency-Key`, expiração -03:00), webhook `/api/webhooks/mercadopago` (HMAC-SHA256 do manifesto `id;request-id;ts`, comparação em tempo constante; status relido na API do provedor; confere `external_reference` e valor), páginas `/contribuir` e `/contribuir/[chargeId]` (QR em SVG, copia e cola, verificação automática).
-- **Não verificado contra o provedor real**: sem chaves, só testado com `fetch` simulado e testes SQL. Pendente: configurar `MERCADOPAGO_ACCESS_TOKEN` e `MERCADOPAGO_WEBHOOK_SECRET`, cadastrar a URL do webhook no painel e testar em sandbox antes de produção.
+- **Não verificado contra o provedor real**: sem chaves, só testado com `fetch` simulado e testes SQL. Atualização 2026-11-28: a conta global foi removida; cada igreja recebe na própria conta (chave Pix da igreja ou Mercado Pago da igreja via OAuth). Procedimento e pendências em `docs/HOMOLOGATION.md` §2.3.
 - Pendente: revisão LGPD do dado financeiro por pessoa; validar o estorno no sandbox do Mercado Pago.
 
 ## Membros e convites (Gate 4)

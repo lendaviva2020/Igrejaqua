@@ -13,7 +13,7 @@ const staticDir = join(process.cwd(), ".next", "static");
 
 describe.skipIf(!existsSync(staticDir))("bundle do navegador não contém segredos (SECURITY §6)", () => {
   const files = existsSync(staticDir) ? walk(staticDir).filter((f) => /\.(js|css|map)$/.test(f)) : [];
-  const forbidden = ["SUPABASE_SERVICE_ROLE_KEY", "DEEPSEEK_API_KEY", "service_role", "CRON_SECRET", "MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_WEBHOOK_SECRET", "provider-writes", "createSupabaseAdminClient", "rate_limit_hit"];
+  const forbidden = ["SUPABASE_SERVICE_ROLE_KEY", "DEEPSEEK_API_KEY", "service_role", "CRON_SECRET", "MERCADOPAGO_ACCESS_TOKEN", "MERCADOPAGO_WEBHOOK_SECRET", "MERCADOPAGO_CLIENT_SECRET", "MERCADOPAGO_TOKEN_KEY", "mp-accounts-store", "access_token_enc", "provider-writes", "createSupabaseAdminClient", "rate_limit_hit"];
   it.each(forbidden)("nenhum chunk contém %s", (needle) => {
     const leaks = files.filter((f) => readFileSync(f, "utf8").includes(needle));
     expect(leaks).toEqual([]);

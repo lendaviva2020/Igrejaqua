@@ -13,7 +13,7 @@ test.describe("menu do celular — administração", () => {
     await menu.click();
     const sheet = page.getByRole("dialog", { name: "Igreja de Teste" });
     await expect(sheet).toBeVisible();
-    for (const label of ADMIN_MODULES) await expect(sheet.getByRole("link", { name: label, exact: true })).toBeVisible();
+    for (const label of ADMIN_MODULES) await expect(sheet.getByRole("link", { name: new RegExp(`^${label}( \\(\\d+ não lidas\\))?$`) })).toBeVisible();
     await page.keyboard.press("Escape");
     await expect(sheet).toBeHidden();
 
@@ -33,7 +33,7 @@ test.describe("menu do celular — membro", () => {
     await page.getByRole("button", { name: /Menu/ }).click();
     const sheet = page.getByRole("dialog");
     await expect(sheet.getByRole("link", { name: "Bíblia", exact: true })).toBeVisible();
-    for (const label of MEMBER_HIDDEN) await expect(sheet.getByRole("link", { name: label, exact: true })).toHaveCount(0);
+    for (const label of MEMBER_HIDDEN) await expect(sheet.getByRole("link", { name: new RegExp(`^${label}( \\(\\d+ não lidas\\))?$`) })).toHaveCount(0);
     await expect(sheet.getByRole("button", { name: "Sair da conta" })).toBeVisible();
   });
 });

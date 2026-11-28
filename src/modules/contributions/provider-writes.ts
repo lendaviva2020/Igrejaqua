@@ -27,6 +27,17 @@ export async function attachProviderPayment(input: { churchId: string; chargeId:
   if (error) throw new Error(`Falha ao gravar pagamento do provedor: ${error.message}`);
 }
 
+/** Contribuição pela chave Pix da igreja: grava o "copia e cola" gerado e o identificador do Pix. */
+export async function attachStaticPix(input: { churchId: string; chargeId: string; brCode: string; txid: string }): Promise<void> {
+  const { error } = await createSupabaseAdminClient()
+    .from("pix_charges")
+    .update({ provider: "pix_key", qr_code: input.brCode, pix_txid: input.txid })
+    .eq("church_id", input.churchId)
+    .eq("id", input.chargeId)
+    .eq("status", "pending");
+  if (error) throw new Error(`Falha ao gravar o Pix da igreja: ${error.message}`);
+}
+
 export async function markChargeCancelled(churchId: string, chargeId: string): Promise<void> {
   const { error } = await createSupabaseAdminClient().from("pix_charges").update({ status: "cancelled" }).eq("church_id", churchId).eq("id", chargeId).eq("status", "pending");
   if (error) throw new Error(`Falha ao cancelar cobrança: ${error.message}`);

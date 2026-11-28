@@ -8,14 +8,18 @@ import { MfaSettings } from "@/components/security/mfa-settings";
 import { NewPasswordForm } from "../../(auth)/redefinir-senha/new-password-form";
 import { AiSettings, ChurchForm, DsrAdminRow, DsrForm, ProfileForm } from "./settings-client";
 import { DSR_KIND_LABEL, DSR_STATUS_LABEL } from "@/modules/settings/schemas";
+import { getPaymentSetup } from "@/modules/contributions/payment-method";
+import { PaymentSettings } from "./payment-settings";
 
 export const metadata: Metadata = { title: "Configurações" };
 const dateFmt = new Intl.DateTimeFormat("pt-BR", { day: "2-digit", month: "short", year: "numeric" });
 
-export default async function SettingsPage() {
+export default async function SettingsPage({ searchParams }: { searchParams: Promise<{ mp?: string }> }) {
   const ctx = await resolveChurchContext();
+  const { mp } = await searchParams;
   const isAdmin = can(ctx, "church.settings.update");
   const [profile, church, requests, ai, mfa] = await Promise.all([getMyProfile(ctx.userId), isAdmin ? getChurchData(ctx.churchId) : Promise.resolve(null), listDataRequests(ctx.churchId, ctx.userId), isAdmin ? getAiState(ctx.churchId) : Promise.resolve(null), getMfaState(ctx.role)]);
+  const payments = can(ctx, "finance.manage") ? await getPaymentSetup(ctx.churchId) : null;
   const mine = requests.filter((r) => r.mine);
   const toHandle = requests.filter((r) => !r.mine || isAdmin);
   return (
@@ -41,6 +45,7 @@ export default async function SettingsPage() {
         {isAdmin && church !== null ? (
           <>
             <section aria-labelledby="igreja"><h2 id="igreja" className="mb-3 text-2xl">Dados da igreja</h2><ChurchForm initial={{ name: church.name, legalName: church.legal_name ?? "", documentNumber: church.document_number ?? "", timezone: church.timezone }} /></section>
+            {payments !== null ? <section id="contribuicoes" aria-labelledby="contribuicoes-titulo" className="scroll-mt-20"><h2 id="contribuicoes-titulo" className="mb-3 text-2xl">Contribuições</h2><PaymentSettings setup={payments} mpStatus={typeof mp === "string" && /^[a-z-]{3,20}$/.test(mp) ? mp : null} /></section> : null}
             {ai !== null ? <section aria-labelledby="ia"><h2 id="ia" className="mb-3 text-2xl">Inteligência artificial</h2><AiSettings enabled={ai.enabled} configured={ai.configured} /></section> : null}
             <section aria-labelledby="pedidos">
               <h2 id="pedidos" className="mb-3 text-2xl">Pedidos de titulares</h2>

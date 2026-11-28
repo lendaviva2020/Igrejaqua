@@ -24,7 +24,7 @@ export default defineConfig([
   },
   {
     // Usos permitidos do service role (lista fechada)
-    files: ["src/lib/security/rate-limit.ts", "src/lib/supabase/admin.ts", "src/modules/contributions/provider-writes.ts", "src/modules/notifications/delivery-store.ts", "src/modules/repertoire/ai-store.ts"],
+    files: ["src/lib/security/rate-limit.ts", "src/lib/supabase/admin.ts", "src/modules/contributions/provider-writes.ts", "src/modules/notifications/delivery-store.ts", "src/modules/repertoire/ai-store.ts", "src/modules/contributions/mp-accounts-store.ts"],
     rules: { "no-restricted-imports": "off" },
   },
 ]);
