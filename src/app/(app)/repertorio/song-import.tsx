@@ -6,6 +6,14 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils/cn";
 import { importSongFromLinkAction, type SongImportResult } from "@/modules/repertoire/import-actions";
 import { extractSongFromPaste, type ImportWarning } from "@/modules/repertoire/import/extract";
+import { chordSearchUrl } from "@/modules/repertoire/import/search";
+import { parseSpotifyLink } from "@/modules/repertoire/import/spotify";
+import { youTubeVideoId } from "@/modules/repertoire/import/youtube";
+
+
+function isMediaLink(value: string): boolean {
+  return youTubeVideoId(value) !== null || parseSpotifyLink(value) !== null;
+}
 
 const WARNING_TEXT: Readonly<Record<ImportWarning, string>> = {
   "key-estimated": "O tom não estava indicado: estimamos pelo primeiro acorde. Confira.",
@@ -14,7 +22,7 @@ const WARNING_TEXT: Readonly<Record<ImportWarning, string>> = {
   "tabs-removed": "As tablaturas ficaram de fora (o repertório guarda acordes e letra).",
   capo: "Há indicação de capotraste; ela foi incluída no início da cifra.",
   "artist-missing": "Não encontramos o artista.",
-  "media-no-chords": "Vídeo e áudio não têm cifra: trouxemos música e artista, e o link fica salvo como referência para ouvir. Agora procure a cifra, copie e cole abaixo.",
+  "media-no-chords": "Vídeo e áudio não têm cifra: trouxemos música e artista, e o link fica salvo como referência para ouvir. Toque em Procurar a cifra, copie a cifra no site e volte para tocar em Colar e converter.",
 };
 
 type Mode = "link" | "paste";
@@ -25,7 +33,7 @@ type Mode = "link" | "paste";
  * - Colar cifra: a conversão roda aqui no navegador e funciona com qualquer site.
  * Nada é salvo aqui; a pessoa revisa e salva.
  */
-export function SongImport({ onImported }: { onImported: (song: SongImportResult) => void }) {
+export function SongImport({ onImported, getSearchTerms }: { onImported: (song: SongImportResult) => void; getSearchTerms: () => { title: string; artist: string } }) {
   const id = useId();
   const [mode, setMode] = useState<Mode>("link");
   const [url, setUrl] = useState("");
@@ -63,13 +71,42 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
     });
   };
 
+  /** Converte a cifra colada. Mantém o vídeo/áudio de uma importação anterior como referência. */
+  const convert = (text: string): void => {
+    setError(null);
+    if (text.trim() === "") { setError("Cole a cifra no campo antes de converter."); return; }
+    finish({ ...extractSongFromPaste(text), sourceHost: null, referenceUrl: result?.referenceUrl ?? null });
+  };
+
   const submitPaste = (e: FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
-    setError(null);
-    if (pasted.trim() === "") { setError("Cole a cifra no campo antes de converter."); return; }
-    // Mantém o vídeo de uma importação anterior (YouTube) como referência.
-    finish({ ...extractSongFromPaste(pasted), sourceHost: null, referenceUrl: result?.referenceUrl ?? null });
+    convert(pasted);
   };
+
+  /** Lê a área de transferência (com permissão do navegador) e converte de uma vez. */
+  const pasteFromClipboard = async (): Promise<void> => {
+    setError(null);
+    if (typeof navigator === "undefined" || navigator.clipboard?.readText === undefined) {
+      setError("Este navegador não permite ler a área de transferência. Toque e segure no campo e escolha Colar.");
+      return;
+    }
+    try {
+      const text = await navigator.clipboard.readText();
+      if (text.trim() === "") { setError("A área de transferência está vazia. Copie a cifra no site e tente de novo."); return; }
+      setPasted(text);
+      convert(text);
+    } catch {
+      setError("O navegador não deu permissão para ler a área de transferência. Toque e segure no campo e escolha Colar.");
+    }
+  };
+
+  const searchChords = (): void => {
+    const { title, artist } = getSearchTerms();
+    if (title.trim() === "") { setError("Preencha o título para procurar a cifra."); return; }
+    window.open(chordSearchUrl(title, artist), "_blank", "noopener,noreferrer");
+  };
+
+  const loadingLabel = isMediaLink(url) ? "Identificando música…" : "Buscando e convertendo cifra…";
 
   const tab = (value: Mode, label: string, Icon: typeof Link2) => (
     <button
@@ -108,7 +145,7 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
             aria-describedby={error !== null ? `${id}-erro` : undefined}
             className="min-h-11 min-w-0 flex-1 rounded-controle border border-borda bg-fundo px-3 text-base text-texto placeholder:text-texto-2/70"
           />
-          <Button type="submit" disabled={pending || url.trim() === ""} aria-busy={pending}>{pending ? "Buscando…" : "Buscar música"}</Button>
+          <Button type="submit" disabled={pending || url.trim() === ""} aria-busy={pending}>{pending ? loadingLabel : "Buscar música"}</Button>
         </form>
       ) : (
         <form onSubmit={submitPaste} className="mt-3 flex flex-col gap-2" noValidate>
@@ -124,7 +161,11 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
             aria-describedby={error !== null ? `${id}-erro` : undefined}
             className="rounded-controle border border-borda bg-fundo p-3 font-mono text-sm text-texto placeholder:font-sans placeholder:text-texto-2/70"
           />
-          <Button type="submit" variant="secondary" className="self-start" disabled={pasted.trim() === ""}>Converter cifra</Button>
+          <div className="flex flex-wrap gap-2">
+            <Button type="button" onClick={() => void pasteFromClipboard()}><ClipboardPaste aria-hidden="true" size={16} />Colar e converter</Button>
+            <Button type="submit" variant="secondary" disabled={pasted.trim() === ""}>Converter cifra</Button>
+            <Button type="button" variant="secondary" onClick={searchChords}><Search aria-hidden="true" size={16} />Procurar a cifra<span className="sr-only"> (abre em nova aba)</span></Button>
+          </div>
         </form>
       )}
 
@@ -143,16 +184,6 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
                 </div>
               ))}
             </dl>
-            {result.warnings.includes("media-no-chords") && result.title !== null ? (
-              <a
-                href={`https://www.google.com/search?q=${encodeURIComponent(`cifra ${result.title}${result.artist !== null ? ` ${result.artist}` : ""}`)}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="mt-3 inline-flex min-h-11 items-center gap-2 rounded-full border border-borda px-4 text-sm font-semibold text-texto hover:border-ambar"
-              >
-                <Search aria-hidden="true" size={16} />Procurar a cifra<span className="sr-only"> (abre em nova aba)</span>
-              </a>
-            ) : null}
             {result.warnings.length > 0 ? (
               <ul className="mt-3 flex flex-col gap-1.5">
                 {result.warnings.map((w) => (

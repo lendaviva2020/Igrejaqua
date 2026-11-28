@@ -46,7 +46,7 @@ export function SongForm() {
   });
   return (
     <>
-    <SongImport onImported={applyImport} />
+    <SongImport onImported={applyImport} getSearchTerms={() => ({ title: getValues("title") ?? "", artist: getValues("artist") ?? "" })} />
     <form onSubmit={onSubmit} className="flex max-w-2xl flex-col gap-4" noValidate>
       <FormField label="Título" error={errors.title?.message} {...register("title")} />
       <FormField label="Autor/Intérprete (opcional)" error={errors.artist?.message} {...register("artist")} />

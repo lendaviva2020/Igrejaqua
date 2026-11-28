@@ -255,3 +255,21 @@ describe("Spotify", async () => {
     expect(readSpotifyTrackPage(semArtista, decodeEntities)).toEqual({ title: "Canção", artist: "Banda & Coral" });
   });
 });
+
+describe("casos de borda da importação", async () => {
+  const { splitVideoTitle } = await import("@/modules/repertoire/import/youtube");
+  const { chordSearchUrl } = await import("@/modules/repertoire/import/search");
+  it("medley com / continua inteiro como título", () => {
+    expect(splitVideoTitle("Grupo Teste - Canção Um / Canção Dois (Ao Vivo)", "Grupo Teste")).toEqual({ title: "Canção Um / Canção Dois", artist: "Grupo Teste" });
+  });
+  it("busca usa os valores atuais, com acentos codificados e sem termos vazios", () => {
+    expect(chordSearchUrl(" Ressuscita-me ", "Aline Barros")).toBe("https://www.google.com/search?q=cifra%20Ressuscita-me%20Aline%20Barros");
+    expect(chordSearchUrl("Canção Nova", "")).toBe("https://www.google.com/search?q=cifra%20Can%C3%A7%C3%A3o%20Nova");
+  });
+  it("resposta vazia não quebra: cifra colada vazia vira música sem título nem cifra", async () => {
+    const { extractSongFromPaste } = await import("@/modules/repertoire/import/extract");
+    const song = extractSongFromPaste("   \n  ");
+    expect(song.title).toBeNull();
+    expect(song.chordpro).toBe("");
+  });
+});

@@ -66,3 +66,24 @@ test("Spotify: link de álbum é recusado com orientação; música salva mostra
   await expect(page).toHaveURL(/\/repertorio\/[0-9a-f-]{36}$/);
   await expect(page.getByRole("link", { name: /Ouvir no Spotify/ })).toHaveAttribute("href", "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT");
 });
+
+test("Colar e converter lê a área de transferência; Procurar a cifra usa o título editado", async ({ page, context }) => {
+  await context.grantPermissions(["clipboard-read", "clipboard-write"], { origin: "http://localhost:3160" });
+  // O buscador externo não é acessado no teste: só conferimos o endereço que abriria.
+  await context.route("https://www.google.com/**", (route) => route.fulfill({ status: 200, contentType: "text/html", body: "<title>busca</title>" }));
+  await page.goto("/repertorio");
+  await page.getByRole("button", { name: "Colar cifra" }).click();
+
+  await page.evaluate(() => navigator.clipboard.writeText("Canção da Área de Transferência\nGrupo Teste\nTom: E\n\nE        B\nLinha de teste\n"));
+  await page.getByRole("button", { name: "Colar e converter" }).click();
+  await expect(page.getByLabel("Título")).toHaveValue("Canção da Área de Transferência");
+  await expect(page.getByLabel("Tom original")).toHaveValue("E");
+  await expect(page.getByLabel("Cifra (ChordPro)")).toHaveValue("[E]Linha de [B]teste");
+
+  await page.getByLabel("Título").fill("Título Editado à Mão");
+  const popupPromise = context.waitForEvent("page");
+  await page.getByRole("button", { name: /Procurar a cifra/ }).click();
+  const popup = await popupPromise;
+  expect(decodeURIComponent(popup.url())).toContain("q=cifra Título Editado à Mão Grupo Teste");
+  await popup.close();
+});
