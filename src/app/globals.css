@@ -43,3 +43,18 @@
 @utility brilho-ambar {
   background-image: radial-gradient(120% 140% at 100% 0%, color-mix(in srgb, var(--color-ambar) 26%, transparent) 0%, transparent 60%);
 }
+
+/* Folha "Menu" do celular (components/layout/mobile-nav.tsx): sobe da barra inferior ao abrir e
+   desce ao fechar. Único movimento da navegação, sempre em resposta a um toque; o bloco
+   prefers-reduced-motion acima o reduz a instantâneo. */
+.folha-menu {
+  translate: 0 100%;
+  transition: translate 0.28s cubic-bezier(0.2, 0.8, 0.2, 1), overlay 0.28s allow-discrete, display 0.28s allow-discrete;
+}
+.folha-menu[open] { translate: 0 0; }
+@starting-style { .folha-menu[open] { translate: 0 100%; } }
+.folha-menu::backdrop { opacity: 0; transition: opacity 0.28s, overlay 0.28s allow-discrete, display 0.28s allow-discrete; }
+.folha-menu[open]::backdrop { opacity: 1; }
+@starting-style { .folha-menu[open]::backdrop { opacity: 0; } }
+/* Com a folha aberta, a página de trás não rola. */
+html:has(.folha-menu[open]) { overflow: hidden; }

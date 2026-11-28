@@ -26,7 +26,7 @@ Regras: âmbar só para ação primária, "agora/próximo" e ícones de atalho; 
 Tipografia: Merriweather (títulos) + Source Sans 3 (texto), auto-hospedadas via @fontsource (sem chamadas ao Google) em pesos 400–700; IBM Plex Mono para cifras. Raios: controles 12px, cartões 18px, botões em pílula. Foco: contorno âmbar-claro de 2px.
 
 ### Navegação
-Mobile: barra inferior com Painel, Agenda, Repertório, Oração e Ministérios; demais telas pelos atalhos do painel. Desktop: barra lateral com todas as seções.
+Fonte única: `src/components/layout/navigation.ts` (mesmas capacidades que as páginas checam: nenhum link leva a 404 de permissão). Celular (< 768 px): barra inferior com Painel, Agenda, Repertório, Oração e **Menu**; o Menu abre uma folha com todos os módulos permitidos, agrupados (Início, Cultos e louvor, Comunidade, Palavra, Contribuições, Conta) e o botão Sair. Tablet/desktop: barra lateral fixa com os mesmos grupos. Painel: "Minha escala" e depois "Tudo da igreja" com todos os módulos.
 
 ## 3. Experiências por papel
 

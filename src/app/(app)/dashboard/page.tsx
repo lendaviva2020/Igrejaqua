@@ -1,6 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { ArrowRight, CalendarDays, CalendarOff, HandHeart, Library, Users, type LucideIcon } from "lucide-react";
+import { ArrowRight } from "lucide-react";
+import { NAV_ICONS } from "@/components/layout/nav-icons";
+import { buildNavigation } from "@/components/layout/navigation";
 import { DateBadge } from "@/components/shared/date-badge";
 import { EmptyState } from "@/components/shared/empty-state";
 import { resolveChurchContext } from "@/lib/auth/context";
@@ -12,20 +14,16 @@ import { EVENT_KIND_LABEL } from "@/modules/events/schemas";
 export const metadata: Metadata = { title: "Painel" };
 
 const STATUS_LABEL: Record<string, string> = { published: "Aguardando confirmação", confirmed: "Confirmado" };
-const SHORTCUTS: readonly { href: string; label: string; icon: LucideIcon }[] = [
-  { href: "/agenda", label: "Agenda", icon: CalendarDays },
-  { href: "/repertorio", label: "Repertório", icon: Library },
-  { href: "/oracao", label: "Pedidos de oração", icon: HandHeart },
-  { href: "/ministerios", label: "Ministérios", icon: Users },
-  { href: "/disponibilidade", label: "Minha disponibilidade", icon: CalendarOff },
-];
-
 export default async function DashboardPage() {
   const ctx = await resolveChurchContext();
   const [events, mine, tz, reading] = await Promise.all([listUpcomingEvents(ctx.churchId), listMyUpcomingLineup(ctx.churchId, ctx.membershipId), getChurchTimezone(ctx.churchId), getLatestDevotionalReading(ctx.churchId)]);
   const time = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone: tz });
   const full = new Intl.DateTimeFormat("pt-BR", { weekday: "long", hour: "2-digit", minute: "2-digit", timeZone: tz });
   const next = events[0];
+  // Todos os módulos que o papel permite (mesma fonte do menu), menos o próprio painel e as
+  // notificações, que já estão no sino do cabeçalho e no menu.
+  const HIDDEN_ON_DASHBOARD = new Set(["/dashboard", "/notificacoes"]);
+  const modules = buildNavigation(ctx, 0).groups.map((g) => ({ ...g, items: g.items.filter((i) => !HIDDEN_ON_DASHBOARD.has(i.href)) })).filter((g) => g.items.length > 0);
   return (
     <div className="flex flex-col gap-8">
       <section aria-label="Boas-vindas" className="brilho-ambar rounded-superficie border border-linha bg-superficie p-6">
@@ -58,19 +56,6 @@ export default async function DashboardPage() {
         )}
       </section>
 
-      <nav aria-label="Atalhos">
-        <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-          {SHORTCUTS.map(({ href, label, icon: Icon }) => (
-            <li key={href}>
-              <Link href={href} className="flex min-h-24 flex-col items-center justify-center gap-2 rounded-superficie border border-linha bg-superficie p-3 text-center text-sm hover:bg-superficie-2">
-                <Icon aria-hidden="true" size={26} strokeWidth={1.75} className="text-ambar" />
-                {label}
-              </Link>
-            </li>
-          ))}
-        </ul>
-      </nav>
-
       <section aria-labelledby="minha-escala">
         <h2 id="minha-escala" className="mb-3 text-xl">Minha escala</h2>
         {mine.length === 0 ? (
@@ -90,6 +75,35 @@ export default async function DashboardPage() {
           </ol>
         )}
       </section>
+
+      <nav aria-labelledby="tudo-da-igreja">
+        <h2 id="tudo-da-igreja" className="mb-4 text-xl">Tudo da igreja</h2>
+        <div className="flex flex-col gap-6">
+          {modules.map((group) => (
+            <section key={group.id} aria-labelledby={`painel-${group.id}`}>
+              <h3 id={`painel-${group.id}`} className="mb-2 font-sans text-sm font-semibold text-texto-2">{group.label}</h3>
+              <ul className="grid grid-cols-2 gap-3 lg:grid-cols-3">
+                {group.items.map((item) => {
+                  const Icon = NAV_ICONS[item.icon];
+                  return (
+                    <li key={item.href}>
+                      <Link href={item.href} prefetch={false} className="group flex h-full min-h-16 items-center gap-3 rounded-superficie border border-linha bg-superficie p-3 transition-colors hover:border-ambar/60 hover:bg-superficie-2 sm:items-start sm:p-4">
+                        <span className="flex size-9 shrink-0 items-center sm:size-10 justify-center rounded-controle bg-superficie-2 text-ambar transition-colors group-hover:bg-ambar group-hover:text-sobre-ambar">
+                          <Icon aria-hidden="true" size={20} strokeWidth={1.75} />
+                        </span>
+                        <span className="min-w-0">
+                          <span className="block text-[0.95rem] font-semibold leading-tight">{item.label}</span>
+                          <span className="mt-0.5 hidden text-sm leading-snug text-texto-2 sm:block">{item.description}</span>
+                        </span>
+                      </Link>
+                    </li>
+                  );
+                })}
+              </ul>
+            </section>
+          ))}
+        </div>
+      </nav>
     </div>
   );
 }
