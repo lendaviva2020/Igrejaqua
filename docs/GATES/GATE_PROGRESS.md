@@ -131,3 +131,8 @@ Mutação da RLS (rodada anterior): três políticas enfraquecidas de propósito
 - Defeitos reais encontrados e corrigidos: (1) rolagem horizontal de 13 px na Bíblia em tablet — coluna do shell sem `min-w-0` + campo de busca sem encolher; (2) limitador de tentativas dependia de privilégio padrão implícito da plataforma — migration `20261126002100` torna o grant explícito à `service_role`.
 - Suíte SQL também passa sob os privilégios padrão do Supabase (`IQ_SUPABASE_DEFAULT_PRIVS=1`).
 - Limite: o login de teste substitui o GoTrue; Auth real, e-mails, getBible, push, Pix e IA seguem não exercitados.
+
+## Gate SEO 1.0 + Gate P0 (performance) — 2026-11-28
+- SEO técnico: robots.txt, sitemap.xml, 404 real, `noindex` (meta + `X-Robots-Tag`), canônicas, títulos/descrições únicos, JSON-LD Organization+WebSite sem dados inventados. Relatórios em `docs/seo/`.
+- Performance: cascata do contexto de igreja reduzida, prefetch por intenção nos itens secundários do menu (−67% requisições de prefetch), região das funções `pdx1` (mesma do Supabase), imagens de marca otimizadas, Web Vitals de campo próprios (`/api/vitals`). Correção de hidratação #418 em `/agenda/[id]`. Relatórios e A/B em `docs/performance/`.
+- Evidência: typecheck, lint, 233 unitários, build, 310 E2E públicos e 132 do passeio autenticado passaram. CWV e indexação **não declarados**: dependem de dados de campo e do Search Console.

@@ -7,11 +7,15 @@ import { leaderCheckInAction, removeAttendanceAction, selfCheckInAction } from "
 
 interface Entry { id: string; membershipId: string; name: string; method: "self" | "leader" | "qr"; checkedInAt: string }
 const METHOD_LABEL = { self: "pelo próprio celular", leader: "registrado pela liderança", qr: "por QR" } as const;
-const timeFmt = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit" });
 
-export function AttendancePanel({ sessionId, open, checkedIn, canRecordOthers, entries, people }: {
-  sessionId: string; open: boolean; checkedIn: boolean; canRecordOthers: boolean; entries: readonly Entry[]; people: readonly { membershipId: string; name: string }[];
+/**
+ * `timeZone` é o fuso da igreja: servidor (UTC) e navegador formatariam horários diferentes sem ele,
+ * quebrando a hidratação (React #418) e mostrando a hora errada a quem estiver em outro fuso.
+ */
+export function AttendancePanel({ sessionId, open, checkedIn, canRecordOthers, entries, people, timeZone }: {
+  sessionId: string; open: boolean; checkedIn: boolean; canRecordOthers: boolean; entries: readonly Entry[]; people: readonly { membershipId: string; name: string }[]; timeZone: string;
 }) {
+  const timeFmt = new Intl.DateTimeFormat("pt-BR", { hour: "2-digit", minute: "2-digit", timeZone });
   const router = useRouter();
   const [pending, start] = useTransition();
   const [error, setError] = useState<string | null>(null);

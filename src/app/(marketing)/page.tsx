@@ -6,8 +6,15 @@ import { DashboardPreview, StagePreview } from "@/components/marketing/landing-p
 import { SocialIcon } from "@/components/marketing/social-icons";
 import { BrandName, Logo } from "@/components/shared/logo";
 import { siteConfig } from "@/lib/site";
+import { buildHomeStructuredData, serializeJsonLd } from "@/lib/seo/structured-data";
 
-export const metadata: Metadata = { title: "Organização que aproxima", description: "Ministérios, escalas, cultos, ensaios e louvor da sua igreja em um só lugar." };
+const HOME_DESCRIPTION = "Ministérios, escalas, cultos, ensaios e louvor da sua igreja em um só lugar. Organização que aproxima pessoas.";
+export const metadata: Metadata = {
+  title: { absolute: "IGREJAQUA · Gestão de igreja, escalas e louvor" },
+  description: HOME_DESCRIPTION,
+  alternates: { canonical: "/" },
+  openGraph: { url: "/", title: "IGREJAQUA · Gestão de igreja, escalas e louvor", description: HOME_DESCRIPTION },
+};
 
 const FEATURES = [
   { icon: UsersRound, title: "Pessoas e ministérios", description: "Organize membros, equipes, funções e lideranças em um só lugar. Cada pessoa sabe onde serve e com quem pode contar." },
@@ -39,6 +46,8 @@ export default function HomePage() {
   const year = new Date().getFullYear();
   return (
     <div className="min-h-dvh overflow-x-clip bg-fundo text-texto">
+      {/* Bloco de dados (não executável): conteúdo escapado em serializeJsonLd. */}
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: serializeJsonLd(buildHomeStructuredData(site)) }} />
       <a href="#conteudo" className="sr-only focus:not-sr-only focus:absolute focus:z-50 focus:bg-ambar focus:p-3 focus:text-sobre-ambar">Pular para o conteúdo</a>
 
       <header className="sticky top-0 z-50 border-b border-linha bg-fundo/90 backdrop-blur-md">

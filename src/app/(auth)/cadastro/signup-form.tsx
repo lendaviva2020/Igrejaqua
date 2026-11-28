@@ -45,8 +45,9 @@ export function SignUpForm({ googleEnabled, next, defaultIntent }: { googleEnabl
       <fieldset className="flex flex-col gap-3" aria-describedby={errors.intent ? "intent-err" : undefined}>
         <legend className="mb-1 text-sm font-medium text-texto">Como você vai usar o IGREJAQUA?</legend>
         {INTENT_OPTIONS.map(({ value, title, description, Icon }) => (
-          <label key={value} className="cursor-pointer">
-            <input type="radio" value={value} className="peer sr-only" {...register("intent")} />
+          <label key={value} className="relative cursor-pointer">
+            {/* Invisível, mas do tamanho do cartão: o alvo de toque é o próprio controle (WCAG 2.5.8), não um ponto de 1px. */}
+            <input type="radio" value={value} className="peer absolute inset-0 size-full cursor-pointer appearance-none opacity-0" {...register("intent")} />
             <span className="flex items-start gap-3 rounded-superficie border border-borda bg-fundo p-4 transition-colors peer-checked:border-ambar peer-checked:bg-superficie-2 peer-focus-visible:outline peer-focus-visible:outline-2 peer-focus-visible:outline-ambar">
               <Icon aria-hidden="true" className="mt-0.5 size-5 shrink-0 text-ambar" />
               <span><span className="block font-medium text-texto">{title}</span><span className="block text-sm text-texto-2">{description}</span></span>

@@ -79,3 +79,8 @@ Ver `RBAC.md`. Resumo: papel de igreja (`admin|leader|member`) em `church_member
 
 ## 12. Riscos de segurança abertos
 Ver registro em `GATES/GATE_0_ACCEPTANCE.md` (RISK-01…RISK-13). Nenhum controle acima foi **implementado** no Gate 0; tudo é desenho.
+
+## Rotas públicas, indexação e métricas (Gate SEO 1.0 / P0)
+- Classificação única em `src/lib/seo/routes.ts`: `PROTECTED_PREFIXES` (o proxy redireciona ao login), públicas indexáveis (`/`, `/privacidade`, `/termos`), públicas `noindex` e **desconhecidas → 404 real**. `tests/unit/seo-routes.test.ts` percorre `src/app` e falha se uma rota nova não for classificada. A autorização real continua no layout (`requireUser`/`getUser`) e na RLS.
+- `X-Robots-Tag: noindex, nofollow` em toda resposta que não é institucional. robots.txt bloqueia só `/api/` e **não é controle de acesso**.
+- `POST /api/vitals` é público e só de escrita em log: Zod `.strict()`, corpo ≤ 1 KB, recusa `sec-fetch-site: cross-site`, sem cookies, sessão, IP, user-agent ou ids (rota normalizada para `/segmento/:param`).

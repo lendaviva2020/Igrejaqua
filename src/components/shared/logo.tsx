@@ -6,7 +6,11 @@ const EMBLEM_RATIO = 512 / 310;
 /** Proporção da logo completa (emblema + nome + "Adorar • Conectar • Servir"), em public/brand/logo.webp (960×757). */
 const FULL_RATIO = 960 / 757;
 
-/** Emblema IGREJAQUA. `size` é a altura em px; a largura acompanha a proporção da arte. */
+/**
+ * Emblema IGREJAQUA. `size` é a altura em px; a largura acompanha a proporção da arte.
+ * Otimizado pelo next/image (AVIF/WebP no tamanho exibido): o arquivo original tem 512×310.
+ * Carregamento padrão (lazy): é pequeno, não é o LCP, e a cópia oculta por CSS (menu desktop/celular) nem é baixada.
+ */
 export function Logo({ size = 32, className, decorative = false }: { size?: number; className?: string; decorative?: boolean }) {
   return (
     <Image
@@ -15,8 +19,6 @@ export function Logo({ size = 32, className, decorative = false }: { size?: numb
       height={size}
       alt={decorative ? "" : "IGREJAQUA"}
       className={cn("shrink-0 select-none", className)}
-      unoptimized
-      priority
     />
   );
 }
@@ -26,7 +28,7 @@ export function BrandName({ className }: { className?: string }) {
   return <span className={cn("font-bold tracking-wide text-texto", className)}>IGREJA<span className="text-ambar">QUA</span></span>;
 }
 
-/** Logo completa com o lema. `width` em px. */
+/** Logo completa com o lema. `width` em px. O original (960×757, 171 KB) é redimensionado pelo next/image. */
 export function LogoFull({ width = 240, className }: { width?: number; className?: string }) {
   return (
     <Image
@@ -35,8 +37,7 @@ export function LogoFull({ width = 240, className }: { width?: number; className
       height={Math.round(width / FULL_RATIO)}
       alt="IGREJAQUA — Adorar, Conectar, Servir"
       className={cn("select-none", className)}
-      unoptimized
-      priority
+      preload
     />
   );
 }

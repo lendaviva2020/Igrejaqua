@@ -1,7 +1,10 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { classifyPath } from "@/lib/seo/routes";
 import { updateSession } from "@/lib/supabase/proxy-session";
 
-const PUBLIC_PREFIXES = ["/login", "/cadastro", "/recuperar-senha", "/privacidade", "/termos", "/callback", "/manifest.json", "/offline", "/icons", "/images", "/api/webhooks/", "/api/cron/"];
+/** Recursos que nunca dependem da sessão: não pagam a ida ao servidor Auth a cada requisição. */
+const SESSIONLESS_PREFIXES = ["/robots.txt", "/sitemap.xml", "/manifest.json", "/api/vitals", "/api/webhooks/", "/api/cron/"] as const;
+const NOINDEX = "noindex, nofollow";
 
 function buildCsp(nonce: string): string {
   const dev = process.env.NODE_ENV !== "production";
@@ -31,17 +34,23 @@ export async function proxy(request: NextRequest): Promise<NextResponse> {
   headers.set("content-security-policy", csp);
 
   const { pathname } = request.nextUrl;
+  const access = classifyPath(pathname);
   const response = NextResponse.next({ request: { headers } });
-  const { userId } = await updateSession(request, response);
+  const sessionless = SESSIONLESS_PREFIXES.some((p) => pathname.startsWith(p));
+  const { userId } = sessionless ? { userId: null } : await updateSession(request, response);
 
-  const isPublic = pathname === "/" || PUBLIC_PREFIXES.some((p) => pathname.startsWith(p));
-  if (userId === null && !isPublic) {
+  if (access === "protected" && userId === null) {
     const redirect = NextResponse.redirect(new URL(`/login?next=${encodeURIComponent(pathname + request.nextUrl.search)}`, request.url));
     redirect.headers.set("content-security-policy", csp);
+    redirect.headers.set("x-robots-tag", NOINDEX);
     return redirect;
   }
   response.headers.set("content-security-policy", csp);
-  if (!isPublic) response.headers.set("cache-control", "private, no-store");
+  // Só as páginas institucionais são indexáveis; o resto recebe noindex também no cabeçalho
+  // (cobre rotas de API, arquivos e respostas que não carregam a meta tag).
+  if (access !== "indexable") response.headers.set("x-robots-tag", NOINDEX);
+  // Caminho inexistente segue para o Next.js e recebe 404 real; nunca é guardado em cache compartilhado.
+  if (access === "protected" || access === "unknown") response.headers.set("cache-control", "private, no-store");
   return response;
 }
 

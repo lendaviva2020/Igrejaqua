@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { ContactLine, LegalPage } from "@/components/marketing/legal-page";
+import { formatLegalDate, LEGAL_UPDATED_AT } from "@/lib/seo/content-dates";
 
-export const metadata: Metadata = { title: "Termos de Uso" };
+const DESCRIPTION = "Condições de uso do IGREJAQUA: o que é o sistema, responsabilidades da igreja e de cada usuário.";
+export const metadata: Metadata = { title: "Termos de Uso", description: DESCRIPTION, alternates: { canonical: "/termos" }, openGraph: { url: "/termos", title: "Termos de Uso · IGREJAQUA", description: DESCRIPTION } };
 
 export default function TermsPage() {
   return (
-    <LegalPage title="Termos de Uso" updated="26 de novembro de 2026">
+    <LegalPage title="Termos de Uso" updated={formatLegalDate(LEGAL_UPDATED_AT.termos)}>
       <p>Ao criar uma conta ou entrar no IGREJAQUA você concorda com estes termos. Se não concordar, não use o sistema.</p>
 
       <h2>O que é o IGREJAQUA</h2>

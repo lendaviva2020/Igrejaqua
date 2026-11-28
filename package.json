@@ -14,7 +14,8 @@
     "test:sql": "bash supabase/tests/run.sh",
     "check": "npm run typecheck && npm run lint && npm run test",
     "stack:up": "bash tools/e2e-stack/start.sh",
-    "test:stack": "playwright test --config playwright.stack.config.ts"
+    "test:stack": "playwright test --config playwright.stack.config.ts",
+    "perf:bench": "playwright test --config tools/perf/playwright.perf.config.ts --trace off"
   },
   "dependencies": {
     "@fontsource-variable/merriweather": "^5.3.0",

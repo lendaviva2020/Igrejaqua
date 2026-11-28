@@ -1,11 +1,13 @@
 import type { Metadata } from "next";
 import { ContactLine, LegalPage } from "@/components/marketing/legal-page";
+import { formatLegalDate, LEGAL_UPDATED_AT } from "@/lib/seo/content-dates";
 
-export const metadata: Metadata = { title: "Política de Privacidade" };
+const DESCRIPTION = "Quais dados o IGREJAQUA trata, para quê, com quem compartilha e como exercer seus direitos pela LGPD.";
+export const metadata: Metadata = { title: "Política de Privacidade", description: DESCRIPTION, alternates: { canonical: "/privacidade" }, openGraph: { url: "/privacidade", title: "Política de Privacidade · IGREJAQUA", description: DESCRIPTION } };
 
 export default function PrivacyPage() {
   return (
-    <LegalPage title="Política de Privacidade" updated="26 de novembro de 2026">
+    <LegalPage title="Política de Privacidade" updated={formatLegalDate(LEGAL_UPDATED_AT.privacidade)}>
       <p>Esta política explica quais dados o IGREJAQUA trata, para quê e quais são os seus direitos, conforme a Lei Geral de Proteção de Dados (Lei 13.709/2018, LGPD).</p>
 
       <h2>Quem é responsável pelos dados</h2>
@@ -27,6 +29,7 @@ export default function PrivacyPage() {
 
       <h2>Cookies e rastreamento</h2>
       <p>Usamos apenas cookies estritamente necessários: manter você conectado e lembrar qual igreja está aberta. Não há cookies de publicidade, pixels de redes sociais nem ferramentas de análise de terceiros. As fontes do site são servidas pelo próprio sistema, sem contato com servidores do Google.</p>
+      <p>Para manter o sistema rápido, o navegador envia ao próprio IGREJAQUA medições anônimas de desempenho das páginas (tempos de carregamento e de resposta). Elas não usam cookies, não incluem nome, e-mail nem identificador da conta e não são compartilhadas com terceiros.</p>
 
       <h2>Com quem os dados são compartilhados</h2>
       <ul>

@@ -1,6 +1,10 @@
+import type { Metadata } from "next";
 import type { ReactNode } from "react";
 import { BrandName, Logo } from "@/components/shared/logo";
 import { requireUser } from "@/lib/auth/context";
+
+/** Área sem valor de busca: fora do índice (o proxy também envia X-Robots-Tag). */
+export const metadata: Metadata = { robots: { index: false, follow: false } };
 
 /** Fora do layout (app): quem ainda não tem igreja precisa chegar aqui sem exigir contexto de igreja (evita loop de redirecionamento). */
 export default async function OnboardingLayout({ children }: { children: ReactNode }) {

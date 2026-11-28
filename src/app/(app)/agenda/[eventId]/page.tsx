@@ -53,7 +53,7 @@ export default async function EventPage({ params }: { params: Promise<{ eventId:
         <article key={s.id} aria-labelledby={`s-${s.id}`} className="mb-8">
           <h3 id={`s-${s.id}`} className="text-xl">{s.name} <time dateTime={s.starts_at} className="tabular text-sm text-texto-2">{fmt.format(new Date(s.starts_at))}</time></h3>
           <RsvpButtons sessionId={s.id} current={rsvp.mine[s.id]} goingCount={can(ctx, "attendance.record.others") ? (rsvp.goingCount[s.id] ?? 0) : undefined} />
-          <AttendancePanel sessionId={s.id} open={isCheckInOpen(new Date(s.starts_at), new Date(s.ends_at), new Date())} checkedIn={attendance.mineBySession[s.id] === true} canRecordOthers={canRecordOthers} entries={attendance.entriesBySession[s.id] ?? []} people={attendance.people} />
+          <AttendancePanel sessionId={s.id} open={isCheckInOpen(new Date(s.starts_at), new Date(s.ends_at), new Date())} checkedIn={attendance.mineBySession[s.id] === true} canRecordOthers={canRecordOthers} entries={attendance.entriesBySession[s.id] ?? []} people={attendance.people} timeZone={tz} />
           <SetlistPanel sessionId={s.id} items={setlist.filter((x) => x.sessionId === s.id)} options={versionOptions} canEdit={canSetlist} />
           {(() => {
             const draft = repertoireDrafts.find((d) => d.sessionId === s.id);

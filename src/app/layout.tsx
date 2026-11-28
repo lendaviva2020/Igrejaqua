@@ -8,11 +8,23 @@ import "@fontsource/ibm-plex-mono/400.css";
 import "@fontsource/ibm-plex-mono/500.css";
 import "./globals.css";
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { WebVitalsReporter } from "@/components/perf/web-vitals-reporter";
+import { siteOrigin } from "@/lib/seo/routes";
 
+const DESCRIPTION = "Gestão de igreja, ministérios, escalas e repertório.";
+
+/**
+ * Padrões herdados por todas as páginas. A canônica NÃO é definida aqui (seria herdada por páginas
+ * privadas): cada página pública declara a sua. Os grupos privados declaram `noindex` no próprio layout.
+ */
 export const metadata: Metadata = {
+  metadataBase: new URL(siteOrigin()),
   title: { default: "IGREJAQUA", template: "%s · IGREJAQUA" },
-  description: "Gestão de igreja, ministérios, escalas e repertório.",
+  description: DESCRIPTION,
   applicationName: "IGREJAQUA",
+  openGraph: { type: "website", locale: "pt_BR", siteName: "IGREJAQUA", description: DESCRIPTION, images: [{ url: "/icons/icon-512.png", width: 512, height: 512, alt: "Emblema do IGREJAQUA" }] },
+  twitter: { card: "summary" },
+  formatDetection: { telephone: false, email: false, address: false },
   manifest: "/manifest.json",
   icons: { icon: [{ url: "/favicon.ico", sizes: "48x48" }, { url: "/icons/icon-192.png", type: "image/png", sizes: "192x192" }], apple: "/icons/apple-touch-icon.png" },
 };
@@ -34,6 +46,7 @@ export default async function RootLayout({ children }: { children: ReactNode }) 
       <body>
         {children}
         <ServiceWorkerRegister />
+        <WebVitalsReporter />
       </body>
     </html>
   );

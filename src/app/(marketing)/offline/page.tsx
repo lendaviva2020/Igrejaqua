@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { Logo } from "@/components/shared/logo";
 
-export const metadata: Metadata = { title: "Sem conexão" };
+export const metadata: Metadata = { title: "Sem conexão", robots: { index: false, follow: false } };
 
 export default function OfflinePage() {
   return (
