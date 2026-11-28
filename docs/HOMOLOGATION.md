@@ -23,6 +23,15 @@ Somente servidor (nunca com prefixo `NEXT_PUBLIC_`): `SUPABASE_SERVICE_ROLE_KEY`
 
 Canal sem chave fica desligado e nada é enviado (e-mail, push, Pix e IA degradam sem erro).
 
+### 2.1 URLs do Supabase Auth (obrigatório — sem isso os e-mails levam para localhost)
+O app envia ao Supabase o endereço de volta correto (`https://<domínio>/callback?...`, ver `src/lib/app-url.ts`), mas o Supabase **só aceita endereços da lista de permitidos**; fora dela, ele usa a **Site URL**. O padrão de projeto novo é `http://localhost:3000`, e era o que estava em produção (2026-11-28: logs do Auth com `referer: http://localhost:3000` mesmo depois da correção do app).
+
+Supabase → **Authentication → URL Configuration**:
+- **Site URL**: `https://igrejaqua.vercel.app` (ou o domínio próprio definitivo).
+- **Redirect URLs** (adicionar): `https://igrejaqua.vercel.app/**` e, para desenvolvimento, `http://localhost:3000/**`. Previews da Vercel, se forem usados com login: `https://*-felipe-2bc249ac.vercel.app/**`.
+
+Vale para confirmação de cadastro, recuperação de senha e login com Google. Teste: crie uma conta nova e confira se o botão do e-mail abre `https://igrejaqua.vercel.app/...`.
+
 ## 3. Primeiro acesso
 
 1. Criar a conta do pastor/administrador e a igreja (fluxo de cadastro). O administrador é obrigado a ativar o **MFA (TOTP)** no primeiro acesso.
