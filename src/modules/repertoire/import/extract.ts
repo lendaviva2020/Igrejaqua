@@ -14,7 +14,7 @@ export type ImportWarning =
   | "tabs-removed"       // tablaturas removidas
   | "capo"               // a página indica capotraste
   | "artist-missing"
-  | "video-no-chords";   // link de vídeo: traz música e artista, mas vídeo não tem cifra
+  | "media-no-chords";   // link de vídeo/áudio (YouTube, Spotify): traz música e artista, mas não tem cifra
 
 export interface ImportedSong {
   readonly title: string | null;

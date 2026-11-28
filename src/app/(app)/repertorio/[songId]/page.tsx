@@ -19,8 +19,8 @@ function referenceLink(raw: string | null): { href: string; label: string; host:
   try {
     const url = new URL(raw);
     const host = url.hostname.replace(/^(www|m|music)\./, "");
-    const isVideo = host === "youtube.com" || host === "youtu.be";
-    return { href: url.toString(), label: isVideo ? "Ouvir no YouTube" : "Ouvir referência", host: isVideo ? "" : host };
+    const platform = host === "youtube.com" || host === "youtu.be" ? "YouTube" : host === "open.spotify.com" || host === "spotify.com" ? "Spotify" : null;
+    return { href: url.toString(), label: platform !== null ? `Ouvir no ${platform}` : "Ouvir referência", host: platform !== null ? "" : host };
   } catch {
     return null;
   }

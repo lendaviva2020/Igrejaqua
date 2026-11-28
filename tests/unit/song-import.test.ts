@@ -229,3 +229,29 @@ describe("link de referência no formulário", async () => {
     }
   });
 });
+
+describe("Spotify", async () => {
+  const { parseSpotifyLink, readSpotifyTrackPage, spotifyOEmbedUrl, findSpotifyTrackId } = await import("@/modules/repertoire/import/spotify");
+  const ID = "4cOdK2wGLETKBW3PvgPWqT";
+  it("reconhece links e URIs de faixa; recusa álbum, playlist e artista", () => {
+    for (const url of [`https://open.spotify.com/track/${ID}`, `https://open.spotify.com/track/${ID}?si=abc123`, `https://open.spotify.com/intl-pt/track/${ID}`, `https://open.spotify.com/intl-pt-br/track/${ID}?si=x`, `spotify:track:${ID}`]) {
+      expect(parseSpotifyLink(url), url).toEqual({ kind: "track", id: ID });
+    }
+    for (const url of ["https://open.spotify.com/album/6N9PS4QXF1D0OWPk0Sxtb4", "https://open.spotify.com/playlist/37i9dQZF1DXcBWIGoYBM5M", "https://open.spotify.com/artist/0gxyHStUsqpMadRV0Di1Qt", "spotify:album:6N9PS4QXF1D0OWPk0Sxtb4"]) {
+      expect(parseSpotifyLink(url), url).toEqual({ kind: "not-a-track" });
+    }
+    expect(parseSpotifyLink("https://spotify.link/AbCdEf")).toEqual({ kind: "short-link" });
+    for (const url of ["https://open.spotify.com.golpe.com/track/x", "https://www.youtube.com/watch?v=dQw4w9WgXcQ"]) expect(parseSpotifyLink(url), url).toBeNull();
+    expect(spotifyOEmbedUrl(ID)).toBe("https://open.spotify.com/oembed?url=https%3A%2F%2Fopen.spotify.com%2Ftrack%2F4cOdK2wGLETKBW3PvgPWqT");
+    expect(findSpotifyTrackId(`<a href="https://open.spotify.com/track/${ID}?si=1">abrir</a>`)).toBe(ID);
+  });
+
+  it("lê música e artista das meta tags reais da página da faixa", () => {
+    // Trecho real de open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT (2026-11-28).
+    const real = `<meta property="og:title" content="Never Gonna Give You Up"/><meta property="og:description" content="Rick Astley · Whenever You Need Somebody · Song · 1987"/><meta name="music:musician_description" content="Rick Astley"/>`;
+    expect(readSpotifyTrackPage(real, decodeEntities)).toEqual({ title: "Never Gonna Give You Up", artist: "Rick Astley" });
+    // Sem o campo do artista, usa o 1º trecho da descrição; entidades são decodificadas.
+    const semArtista = `<meta property="og:title" content="Can&ccedil;&atilde;o"/><meta property="og:description" content="Banda &amp; Coral · Álbum · Song · 2020"/>`;
+    expect(readSpotifyTrackPage(semArtista, decodeEntities)).toEqual({ title: "Canção", artist: "Banda & Coral" });
+  });
+});

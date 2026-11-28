@@ -53,3 +53,16 @@ test("link de referência inseguro é recusado no formulário", async ({ page })
   await expect(page.locator("main").getByText("Use um link seguro, começando com https://")).toBeVisible();
   await expect(page).toHaveURL(/\/repertorio$/);
 });
+
+test("Spotify: link de álbum é recusado com orientação; música salva mostra Ouvir no Spotify", async ({ page }) => {
+  await page.goto("/repertorio");
+  await page.getByLabel("Link da página da música").fill("https://open.spotify.com/album/6N9PS4QXF1D0OWPk0Sxtb4");
+  await page.getByRole("button", { name: "Buscar música" }).click();
+  await expect(page.locator("main").getByRole("alert")).toHaveText("Esse link do Spotify não é de uma música. Abra a música e use Compartilhar → Copiar link da música.");
+
+  await page.getByLabel("Título").fill("Música com Spotify de Teste");
+  await page.getByLabel("Link de referência (opcional)").fill("https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT");
+  await page.getByRole("button", { name: "Salvar música" }).click();
+  await expect(page).toHaveURL(/\/repertorio\/[0-9a-f-]{36}$/);
+  await expect(page.getByRole("link", { name: /Ouvir no Spotify/ })).toHaveAttribute("href", "https://open.spotify.com/track/4cOdK2wGLETKBW3PvgPWqT");
+});

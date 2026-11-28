@@ -14,7 +14,7 @@ const WARNING_TEXT: Readonly<Record<ImportWarning, string>> = {
   "tabs-removed": "As tablaturas ficaram de fora (o repertório guarda acordes e letra).",
   capo: "Há indicação de capotraste; ela foi incluída no início da cifra.",
   "artist-missing": "Não encontramos o artista.",
-  "video-no-chords": "Vídeo não tem cifra: trouxemos música e artista, e o link fica salvo como referência. Agora procure a cifra, copie e cole abaixo.",
+  "media-no-chords": "Vídeo e áudio não têm cifra: trouxemos música e artista, e o link fica salvo como referência para ouvir. Agora procure a cifra, copie e cole abaixo.",
 };
 
 type Mode = "link" | "paste";
@@ -58,8 +58,8 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
         return;
       }
       finish(r.data);
-      // Vídeo não tem cifra: o próximo passo natural é colar a cifra.
-      if (r.data.warnings.includes("video-no-chords")) choose("paste");
+      // Vídeo/áudio não tem cifra: o próximo passo natural é colar a cifra.
+      if (r.data.warnings.includes("media-no-chords")) choose("paste");
     });
   };
 
@@ -101,7 +101,7 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
             inputMode="url"
             autoComplete="off"
             spellCheck={false}
-            placeholder="Cole o link da página da cifra"
+            placeholder="Link da cifra, do YouTube ou do Spotify"
             value={url}
             onChange={(e) => setUrl(e.target.value)}
             aria-invalid={error !== null ? true : undefined}
@@ -143,7 +143,7 @@ export function SongImport({ onImported }: { onImported: (song: SongImportResult
                 </div>
               ))}
             </dl>
-            {result.warnings.includes("video-no-chords") && result.title !== null ? (
+            {result.warnings.includes("media-no-chords") && result.title !== null ? (
               <a
                 href={`https://www.google.com/search?q=${encodeURIComponent(`cifra ${result.title}${result.artist !== null ? ` ${result.artist}` : ""}`)}`}
                 target="_blank"

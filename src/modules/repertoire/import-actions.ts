@@ -9,6 +9,8 @@ import { parseChordPro, ChordProError } from "@/lib/chords/chordpro";
 import { extractSongFromHtml, extractSongFromText, type ImportedSong } from "./import/extract";
 import { fetchPublicPage, PageFetchError, type FetchFailure } from "./import/safe-fetch";
 import { splitVideoTitle, youTubeOEmbedUrl, youTubeVideoId, youTubeWatchUrl } from "./import/youtube";
+import { findSpotifyTrackId, parseSpotifyLink, readSpotifyTrackPage, spotifyOEmbedUrl, spotifyTrackUrl } from "./import/spotify";
+import { decodeEntities } from "./import/extract";
 
 const ImportFromLinkSchema = z.object({ url: z.string().trim().min(8, "Cole o link da música").max(2048, "Link longo demais") }).strict();
 
@@ -20,6 +22,50 @@ export interface SongImportResult extends ImportedSong {
 }
 
 const OEmbedSchema = z.object({ title: z.string().min(1).max(500), author_name: z.string().max(200).optional() });
+
+const SpotifyOEmbedSchema = z.object({ title: z.string().min(1).max(500) });
+
+/**
+ * Faixa do Spotify: música e artista pelas meta tags de prévia da página pública da faixa;
+ * se a página não responder, o oEmbed oficial dá ao menos o nome da música.
+ */
+async function importFromSpotify(trackId: string): Promise<Result<SongImportResult>> {
+  let title: string | null = null;
+  let artist: string | null = null;
+  try {
+    const page = await fetchPublicPage(spotifyTrackUrl(trackId));
+    ({ title, artist } = readSpotifyTrackPage(page.body, decodeEntities));
+  } catch (e) {
+    if (!(e instanceof PageFetchError)) console.error("song_import_spotify_unexpected", e instanceof Error ? e.name : "unknown");
+  }
+  if (title === null) {
+    try {
+      const oembed = await fetchPublicPage(spotifyOEmbedUrl(trackId), { allowJson: true });
+      const parsed = SpotifyOEmbedSchema.safeParse(JSON.parse(oembed.body));
+      if (parsed.success) title = decodeEntities(parsed.data.title).trim().slice(0, 200) || null;
+    } catch (e) {
+      if (e instanceof PageFetchError && (e.reason === "refused" || e.reason === "http-error")) {
+        return fail("NOT_FOUND", "Não encontramos essa música no Spotify. Confira o link (use Compartilhar → Copiar link da música).");
+      }
+      if (!(e instanceof PageFetchError) && !(e instanceof SyntaxError)) console.error("song_import_spotify_oembed_unexpected", e instanceof Error ? e.name : "unknown");
+    }
+  }
+  if (title === null) return fail("UNAVAILABLE", FAILURE_MESSAGE.network);
+  const warnings: ImportedSong["warnings"] = ["media-no-chords", ...(artist === null ? (["artist-missing"] as const) : [])];
+  return ok({ title, artist, key: null, bpm: null, capo: null, chordpro: "", warnings, sourceHost: "spotify.com", referenceUrl: spotifyTrackUrl(trackId) });
+}
+
+/** Link curto (spotify.link / spoti.fi): segue o redirecionamento e procura a faixa no destino. */
+async function resolveSpotifyShortLink(url: string): Promise<string | null> {
+  try {
+    const page = await fetchPublicPage(url);
+    const direct = parseSpotifyLink(page.url);
+    if (direct?.kind === "track") return direct.id;
+    return findSpotifyTrackId(page.body);
+  } catch {
+    return null;
+  }
+}
 
 /** Vídeo do YouTube: título e canal pelo oEmbed oficial. Vídeo não tem cifra; o link fica como referência. */
 async function importFromYouTube(videoId: string): Promise<Result<SongImportResult>> {
@@ -43,7 +89,7 @@ async function importFromYouTube(videoId: string): Promise<Result<SongImportResu
   const data = OEmbedSchema.safeParse(json);
   if (!data.success) return fail("UNAVAILABLE", FAILURE_MESSAGE.network);
   const { title, artist } = splitVideoTitle(data.data.title, data.data.author_name ?? null);
-  const warnings: ImportedSong["warnings"] = ["video-no-chords", ...(artist === null ? (["artist-missing"] as const) : [])];
+  const warnings: ImportedSong["warnings"] = ["media-no-chords", ...(artist === null ? (["artist-missing"] as const) : [])];
   return ok({ title, artist, key: null, bpm: null, capo: null, chordpro: "", warnings, sourceHost: "youtube.com", referenceUrl: youTubeWatchUrl(videoId) });
 }
 
@@ -70,6 +116,14 @@ export async function importSongFromLinkAction(input: unknown): Promise<Result<S
   if (!can(ctx, "repertoire.manage")) return fail("FORBIDDEN", "Você não pode gerenciar o repertório.");
   // Cada importação abre uma página externa a partir do servidor: limite por pessoa.
   if (!(await allow(`song-import:${ctx.userId}`, 30, 3600))) return fail("RATE_LIMITED", "Muitas importações seguidas. Aguarde alguns minutos.");
+
+  const spotify = parseSpotifyLink(parsed.data.url);
+  if (spotify !== null) {
+    if (spotify.kind === "not-a-track") return fail("VALIDATION", "Esse link do Spotify não é de uma música. Abra a música e use Compartilhar → Copiar link da música.", { url: ["Use o link de uma música, não de álbum, playlist ou artista."] });
+    const trackId = spotify.kind === "track" ? spotify.id : await resolveSpotifyShortLink(parsed.data.url);
+    if (trackId === null) return fail("NOT_FOUND", "Não conseguimos abrir esse link curto do Spotify. Abra a música no Spotify e use Compartilhar → Copiar link da música.");
+    return importFromSpotify(trackId);
+  }
 
   const videoId = youTubeVideoId(parsed.data.url);
   if (videoId !== null) return importFromYouTube(videoId);
