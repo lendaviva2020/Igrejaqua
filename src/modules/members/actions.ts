@@ -2,13 +2,26 @@
 
 import { revalidatePath } from "next/cache";
 import { resolveChurchContext } from "@/lib/auth/context";
-import { publicEnv } from "@/lib/env";
+import { AppUrlNotConfiguredError } from "@/lib/app-url";
+import { getAppBaseUrl } from "@/lib/app-url.server";
 import { can } from "@/lib/permissions/capabilities";
 import { fail, fromPostgrestError, ok, zodFieldErrors, type Result } from "@/lib/result";
 import { allow } from "@/lib/security/rate-limit";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { ChangeRoleSchema, DecideJoinSchema, InviteSchema, RevokeInviteSchema, SetStatusSchema } from "./schemas";
-import { generateInviteToken, hashInviteToken, joinLinkUrl } from "./token";
+import { generateInviteToken, hashInviteToken, invitationUrl, joinLinkUrl } from "./token";
+
+/** Base pública antes de gravar qualquer token: sem ela, nenhum link quebrado é criado. */
+async function baseUrlOrFail(): Promise<string | null> {
+  try {
+    return await getAppBaseUrl();
+  } catch (e) {
+    if (e instanceof AppUrlNotConfiguredError) { console.error("app_url_not_configured"); return null; }
+    throw e;
+  }
+}
+
+const URL_NOT_CONFIGURED = "O endereço público do sistema não está configurado. Peça ao responsável técnico para definir NEXT_PUBLIC_SITE_URL.";
 
 /** O link (com o token em claro) é devolvido UMA vez; no banco fica só o hash. Envio por e-mail ainda não existe: o admin compartilha o link. */
 export async function inviteMemberAction(input: unknown): Promise<Result<{ link: string; expiresInDays: number }>> {
@@ -17,12 +30,14 @@ export async function inviteMemberAction(input: unknown): Promise<Result<{ link:
   const ctx = await resolveChurchContext();
   if (!can(ctx, "member.invite")) return fail("FORBIDDEN", "Apenas a administração pode convidar.");
   if (!(await allow(`invite:${ctx.userId}`, 20, 3600))) return fail("RATE_LIMITED", "Muitos convites em pouco tempo.");
+  const base = await baseUrlOrFail();
+  if (base === null) return fail("UNAVAILABLE", URL_NOT_CONFIGURED);
   const token = generateInviteToken();
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.from("church_invitations").insert({ church_id: ctx.churchId, email: parsed.data.email, role: parsed.data.role, token_hash: hashInviteToken(token), invited_by: ctx.userId });
   if (error) return fromPostgrestError(error);
   revalidatePath("/membros");
-  return ok({ link: `${publicEnv().NEXT_PUBLIC_SITE_URL}/selecionar-igreja?convite=${token}`, expiresInDays: 7 });
+  return ok({ link: invitationUrl(base, token), expiresInDays: 7 });
 }
 
 export async function revokeInvitationAction(input: unknown): Promise<Result<{ revoked: true }>> {
@@ -43,12 +58,14 @@ export async function rotateJoinLinkAction(): Promise<Result<{ link: string }>> 
   const ctx = await resolveChurchContext();
   if (!can(ctx, "member.invite")) return fail("FORBIDDEN", "Apenas a administração gera o link da igreja.");
   if (!(await allow(`join-link:${ctx.userId}`, 10, 3600))) return fail("RATE_LIMITED", "Muitas trocas de link em pouco tempo.");
+  const base = await baseUrlOrFail();
+  if (base === null) return fail("UNAVAILABLE", URL_NOT_CONFIGURED);
   const token = generateInviteToken();
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.rpc("rotate_church_join_link", { p_church: ctx.churchId, p_token: token });
   if (error) return fromPostgrestError(error);
   revalidatePath("/membros");
-  return ok({ link: joinLinkUrl(token) });
+  return ok({ link: joinLinkUrl(base, token) });
 }
 
 export async function disableJoinLinkAction(): Promise<Result<{ disabled: true }>> {

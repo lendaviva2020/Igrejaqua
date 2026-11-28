@@ -1,9 +1,10 @@
 "use server";
 
+import { appUrlOrNull } from "@/lib/app-url.server";
+
 import { revalidatePath } from "next/cache";
 import { z } from "zod";
 import { requireUser, resolveChurchContext } from "@/lib/auth/context";
-import { publicEnv } from "@/lib/env";
 import { can } from "@/lib/permissions/capabilities";
 import { createPixPayment, mercadoPagoConfig, MercadoPagoError, refundPayment } from "@/lib/payments/mercadopago";
 import { fail, fromPostgrestError, ok, zodFieldErrors, type Result } from "@/lib/result";
@@ -34,7 +35,8 @@ export async function createPixChargeAction(input: unknown): Promise<Result<{ ch
   if (error) return fromPostgrestError(error);
   const charge = InsertedRow.parse(data);
 
-  const site = publicEnv().NEXT_PUBLIC_SITE_URL;
+  // O Mercado Pago só aceita webhook em HTTPS público; sem URL pública, segue sem notificação (a cobrança é reconsultada).
+  const webhook = await appUrlOrNull("/api/webhooks/mercadopago");
   try {
     const payment = await createPixPayment(cfg, {
       amountCents: parsed.data.amountCents,
@@ -42,7 +44,7 @@ export async function createPixChargeAction(input: unknown): Promise<Result<{ ch
       payerEmail: user.email,
       externalReference: charge.id,
       idempotencyKey: charge.idempotency_key,
-      notificationUrl: site.startsWith("https://") ? `${site}/api/webhooks/mercadopago` : null, // exige HTTPS público
+      notificationUrl: webhook !== null && webhook.startsWith("https://") ? webhook : null, // exige HTTPS público
       expiresInMinutes: 30,
     });
     await attachProviderPayment({ churchId: ctx.churchId, chargeId: charge.id, providerPaymentId: payment.providerPaymentId, qrCode: payment.qrCode, ticketUrl: payment.ticketUrl, expiresAt: payment.expiresAt });

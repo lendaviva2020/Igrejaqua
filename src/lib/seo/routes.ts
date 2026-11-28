@@ -1,3 +1,5 @@
+import { resolveAppBaseUrl } from "@/lib/app-url";
+
 /**
  * Classificação única das rotas do IGREJAQUA para autenticação (src/proxy.ts) e indexação (sitemap,
  * robots, X-Robots-Tag). Um teste (tests/unit/seo-routes.test.ts) percorre src/app e falha se uma rota
@@ -64,21 +66,15 @@ export function classifyPath(pathname: string): RouteAccess {
 const DEFAULT_ORIGIN = "http://localhost:3000";
 
 /**
- * Origem canônica absoluta (sem barra final). Ordem: NEXT_PUBLIC_SITE_URL → domínio de produção da
- * Vercel (variável de sistema) → localhost. URLs inválidas são descartadas em vez de derrubar a página.
+ * Origem canônica absoluta (sem barra final) para SEO: sempre o domínio de PRODUÇÃO, mesmo num
+ * deploy de preview (canônica não aponta para URLs temporárias). Mesmas regras de src/lib/app-url.ts:
+ * variável explícita válida (localhost só vale em desenvolvimento local) → domínio de produção da
+ * Vercel → localhost.
  */
 export function siteOrigin(env: Readonly<Record<string, string | undefined>> = process.env): string {
-  const candidates = [env["NEXT_PUBLIC_SITE_URL"], env["VERCEL_PROJECT_PRODUCTION_URL"] ? `https://${env["VERCEL_PROJECT_PRODUCTION_URL"]}` : undefined];
-  for (const candidate of candidates) {
-    if (candidate === undefined || candidate === "") continue;
-    try {
-      const url = new URL(candidate);
-      if (url.protocol === "https:" || url.protocol === "http:") return url.origin;
-    } catch {
-      // Valor malformado: tenta o próximo candidato.
-    }
-  }
-  return DEFAULT_ORIGIN;
+  const production = env["VERCEL_PROJECT_PRODUCTION_URL"];
+  const canonicalEnv = { ...env, VERCEL_ENV: production !== undefined && production !== "" ? "production" : undefined, VERCEL_URL: undefined, VERCEL_BRANCH_URL: undefined };
+  return resolveAppBaseUrl(canonicalEnv) ?? DEFAULT_ORIGIN;
 }
 
 /** URL absoluta para um caminho do site. */

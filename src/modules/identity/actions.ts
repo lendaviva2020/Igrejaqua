@@ -1,15 +1,18 @@
 "use server";
 
+import { appUrlOrNull } from "@/lib/app-url.server";
+
 import { redirect } from "next/navigation";
 import { cookies } from "next/headers";
 import { CHURCH_COOKIE } from "@/lib/auth/context";
 import { fail, ok, zodFieldErrors, type Result } from "@/lib/result";
 import { allow, clientFingerprint } from "@/lib/security/rate-limit";
 import { safeNextPath } from "@/lib/security/safe-redirect";
-import { publicEnv } from "@/lib/env";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { siteConfig } from "@/lib/site";
 import { GoogleSignInSchema, NewPasswordSchema, ResetRequestSchema, SetIntentSchema, SignInSchema, SignUpSchema, type SignupIntent } from "./schemas";
+
+const URL_NOT_CONFIGURED = "O endereço público do sistema não está configurado. Tente mais tarde ou avise a liderança.";
 
 export async function signInAction(input: unknown): Promise<Result<{ redirectTo: string }>> {
   const parsed = SignInSchema.safeParse(input);
@@ -28,14 +31,16 @@ export async function signUpAction(input: unknown): Promise<Result<{ needsEmailC
   if (!parsed.success) return fail("VALIDATION", "Dados inválidos.", zodFieldErrors(parsed.error.issues));
   const fp = await clientFingerprint();
   if (!(await allow(`signup:${fp}`, 5, 3600))) return fail("RATE_LIMITED", "Muitas tentativas. Tente mais tarde.");
+  // `next` leva a pessoa de volta ao link da igreja (ex.: /entrar/<código>) depois de confirmar o e-mail.
+  const emailRedirectTo = await appUrlOrNull(`/callback?next=${encodeURIComponent(safeNextPath(parsed.data.next, "/selecionar-igreja"))}`);
+  if (emailRedirectTo === null) return fail("UNAVAILABLE", URL_NOT_CONFIGURED);
   const supabase = await createSupabaseServerClient();
   const { error } = await supabase.auth.signUp({
     email: parsed.data.email,
     password: parsed.data.password,
     options: {
       data: { full_name: parsed.data.fullName, intent: parsed.data.intent },
-      // `next` leva a pessoa de volta ao link da igreja (ex.: /entrar/<código>) depois de confirmar o e-mail.
-      emailRedirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/callback?next=${encodeURIComponent(safeNextPath(parsed.data.next, "/selecionar-igreja"))}`,
+      emailRedirectTo,
     },
   });
   // Senha recusada pela política do Supabase: avisar (não revela nada sobre o e-mail).
@@ -54,8 +59,10 @@ export async function requestPasswordResetAction(input: unknown): Promise<Result
   if (!parsed.success) return fail("VALIDATION", "E-mail inválido.", zodFieldErrors(parsed.error.issues));
   const fp = await clientFingerprint();
   if (!(await allow(`reset:${fp}`, 3, 3600))) return fail("RATE_LIMITED", "Muitas tentativas. Tente mais tarde.");
+  const redirectTo = await appUrlOrNull("/callback?next=/redefinir-senha");
+  if (redirectTo === null) return fail("UNAVAILABLE", URL_NOT_CONFIGURED);
   const supabase = await createSupabaseServerClient();
-  await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/callback?next=/redefinir-senha` });
+  await supabase.auth.resetPasswordForEmail(parsed.data.email, { redirectTo });
   return ok({ sent: true });
 }
 
@@ -66,11 +73,13 @@ export async function signInWithGoogleAction(input: unknown): Promise<Result<{ u
   if (!siteConfig().googleLogin) return fail("UNAVAILABLE", "Entrada com Google ainda não está ativada.");
   const fp = await clientFingerprint();
   if (!(await allow(`oauth:${fp}`, 10, 600))) return fail("RATE_LIMITED", "Muitas tentativas. Aguarde alguns minutos.");
-  const supabase = await createSupabaseServerClient();
   const next = encodeURIComponent(safeNextPath(parsed.data.next));
+  const redirectTo = await appUrlOrNull(`/callback?next=${next}`);
+  if (redirectTo === null) return fail("UNAVAILABLE", URL_NOT_CONFIGURED);
+  const supabase = await createSupabaseServerClient();
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
-    options: { redirectTo: `${publicEnv().NEXT_PUBLIC_SITE_URL}/callback?next=${next}`, scopes: "openid email profile", skipBrowserRedirect: true },
+    options: { redirectTo, scopes: "openid email profile", skipBrowserRedirect: true },
   });
   if (error || !data.url) return fail("UNAVAILABLE", "Não foi possível iniciar a entrada com Google.");
   return ok({ url: data.url });

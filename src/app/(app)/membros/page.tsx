@@ -6,6 +6,7 @@ import { resolveChurchContext } from "@/lib/auth/context";
 import { can } from "@/lib/permissions/capabilities";
 import { getActiveJoinLink, listMembers, listPendingInvitations } from "@/modules/members/queries";
 import { joinLinkUrl } from "@/modules/members/token";
+import { getAppBaseUrl } from "@/lib/app-url.server";
 import { ROLE_LABEL } from "@/modules/members/schemas";
 import { InviteForm, JoinLinkCard, JoinRequestRow, MemberRow, RevokeInviteButton } from "./members-client";
 
@@ -16,6 +17,8 @@ export default async function MembersPage() {
   const ctx = await resolveChurchContext();
   if (!can(ctx, "member.invite")) notFound();
   const [directory, invitations, joinLink] = await Promise.all([listMembers(ctx.churchId), listPendingInvitations(ctx.churchId), getActiveJoinLink(ctx.churchId)]);
+  // Sem base pública configurada o link não é exibido (nunca um link de localhost em produção).
+  const base = await getAppBaseUrl().catch(() => null);
   const requests = directory.filter((m) => m.status === "pending");
   const members = directory.filter((m) => m.status !== "pending");
   return (
@@ -23,7 +26,7 @@ export default async function MembersPage() {
       <PageHeader title="Membros" description="Convide pessoas, defina papéis e suspenda acessos. Alterações valem na hora." />
       <section aria-labelledby="link-igreja" className="mb-10">
         <h2 id="link-igreja" className="mb-3 text-2xl">Link da igreja</h2>
-        <JoinLinkCard link={joinLink === null ? null : joinLinkUrl(joinLink.token)} />
+        <JoinLinkCard link={joinLink === null || base === null ? null : joinLinkUrl(base, joinLink.token)} />
       </section>
       <section aria-labelledby="pedidos" className="mb-10">
         <h2 id="pedidos" className="mb-3 text-2xl">Pedidos para entrar{requests.length > 0 ? ` (${requests.length})` : ""}</h2>

@@ -95,6 +95,19 @@ describe("processDeliveries", () => {
     expect(complete).toHaveBeenCalledWith("d1", "skipped", "e-mail não configurado");
     expect(complete).toHaveBeenCalledWith("d2", "skipped", "push não configurado");
   });
+  it("sem URL pública (produção sem variável nem Vercel) o e-mail não sai sem link de preferências", async () => {
+    const { store, complete } = makeStore([emailItem]);
+    const send = vi.fn();
+    const semSite = Object.fromEntries(Object.entries(FULL_ENV).filter(([k]) => k !== "NEXT_PUBLIC_SITE_URL"));
+    const summary = await processDeliveries({ store, config: parseDeliveryConfig({ ...semSite, NODE_ENV: "production" }), pushSender: null, send });
+    expect(summary.skipped).toBe(1);
+    expect(send).not.toHaveBeenCalled();
+    expect(complete).toHaveBeenCalledWith("d1", "skipped", "URL pública do app não configurada");
+  });
+  it("na Vercel sem variável, os links do e-mail usam o domínio de produção", () => {
+    const semSite = Object.fromEntries(Object.entries(FULL_ENV).filter(([k]) => k !== "NEXT_PUBLIC_SITE_URL"));
+    expect(parseDeliveryConfig({ ...semSite, VERCEL_ENV: "production", VERCEL_PROJECT_PRODUCTION_URL: "igrejaqua.vercel.app" }).siteUrl).toBe("https://igrejaqua.vercel.app");
+  });
   it("erro transitório de e-mail vira failed (banco reagenda); permanente vira skipped", async () => {
     const a = makeStore([emailItem]);
     expect((await processDeliveries({ store: a.store, config, pushSender: null, send: async () => ({ ok: false, retriable: true, reason: "e-mail HTTP 503" }) })).failed).toBe(1);

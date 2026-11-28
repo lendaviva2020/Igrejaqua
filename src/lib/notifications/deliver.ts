@@ -41,6 +41,8 @@ export async function processDeliveries(deps: DeliveryDeps, limit = 25): Promise
       if (item.channel === "email") {
         if (deps.config.email === null) { await deps.store.complete(item.deliveryId, "skipped", "e-mail não configurado"); skipped += 1; continue; }
         if (item.email === null || item.email === "") { await deps.store.complete(item.deliveryId, "skipped", "sem e-mail do titular"); skipped += 1; continue; }
+        // Sem URL pública o e-mail sairia sem o link de preferências (descadastro): não envia.
+        if (deps.config.siteUrl === null) { await deps.store.complete(item.deliveryId, "skipped", "URL pública do app não configurada"); skipped += 1; continue; }
         const outcome = await send(deps.config.email, { to: item.email, email: buildEmail({ title: item.title, body: item.body, linkPath: item.linkPath, siteUrl: deps.config.siteUrl }) });
         if (outcome.ok) { await deps.store.complete(item.deliveryId, "sent", null); sent += 1; }
         else if (outcome.retriable) { await deps.store.complete(item.deliveryId, "failed", outcome.reason); failed += 1; }
